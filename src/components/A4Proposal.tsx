@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useId } from "react";
+import React, { useState, useId, useMemo } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faPrint,
@@ -25,9 +25,13 @@ import {
   faChevronDown,
   faChevronUp,
   faArrowsRotate,
+  faHourglassHalf,
+  faBolt,
+  faFlagCheckered,
 } from "@fortawesome/free-solid-svg-icons";
 import { faWhatsapp } from "@fortawesome/free-brands-svg-icons";
 import { QuotationCalculationResult } from "../lib/calculator";
+import { calculateTimeline, TimelineConfig } from "../lib/timeline";
 
 export interface A4ProposalProps {
   brandName: string;
@@ -85,8 +89,22 @@ export function A4Proposal({
   const issueDateInputId = useId();
   const validityDaysInputId = useId();
 
+  // State Editor Panels
   const [showRecipientEditor, setShowRecipientEditor] = useState<boolean>(false);
+  const [showTimelineEditor, setShowTimelineEditor] = useState<boolean>(false);
   const [copiedWa, setCopiedWa] = useState<boolean>(false);
+
+  // State Timeline Estimator
+  const [timelineConfig, setTimelineConfig] = useState<TimelineConfig>({
+    startDate: "2026-11-03",
+    baseDays: 10,
+    bufferPercent: 20,
+    mode: "standard",
+  });
+
+  const timeline = useMemo(() => {
+    return calculateTimeline(timelineConfig, activeBrand);
+  }, [timelineConfig, activeBrand]);
 
   const [recipient, setRecipient] = useState<RecipientFormData>(() => {
     const isGemintang = activeBrand === "gemintang" || brandName.toLowerCase().includes("gemintang");
@@ -130,6 +148,12 @@ export function A4Proposal({
         validityDays: 14,
         isVerified: true,
       });
+      setTimelineConfig({
+        startDate: "2026-11-03",
+        baseDays: 10,
+        bufferPercent: 20,
+        mode: "standard",
+      });
     } else {
       setRecipient({
         companyName: "",
@@ -161,11 +185,18 @@ Menindaklanjuti diskusi ruang lingkup proyek *${recipient.projectTitle}*, beriku
 📅 *Tanggal Terbit:* ${recipient.issueDate}
 ⏳ *Masa Berlaku:* ${recipient.validityDays} Hari Kalender (s.d. ${expiryDate})
 
-*IKHTISAR INVESTASI & TERMIN:*
+*IKHTISAR INVESTASI & LINIMASA:*
 • Total Nilai Investasi: *${quotation.subtotalDisplay}*
 • Termin 1 (DP 50% Mulai Kerja): *${quotation.dpAmountDisplay}*
 • Termin 2 (Pelunasan Serah Terima): *${quotation.finalAmountDisplay}*
-• Estimasi Linimasa: *${durationText}*
+• Estimasi Linimasa Kerja: *${timeline.totalDays} Hari Kerja (${timeline.mode === "express" ? "Mode Express" : `${timeline.baseDays}H + Buffer ${timeline.bufferPercent}%`})*
+• Target Selesai / Go-Live: *${timeline.targetDateDisplay}*
+
+*TAHAPAN PENGERJAAN (4 FASE):*
+1. Fase 1: Discovery & Aset (${timeline.milestones[0]?.dayRange || "H1-H2"})
+2. Fase 2: UI/UX & Layout (${timeline.milestones[1]?.dayRange || "H3-H5"})
+3. Fase 3: Development & Coding (${timeline.milestones[2]?.dayRange || "H6-H8"})
+4. Fase 4: Review, Revisi & Go-Live (${timeline.milestones[3]?.dayRange || "H9-H10"})
 
 *GARANSI & BATASAN KERJA:*
 • Garansi Bebas Bug: *${revisiPolicy.garansiHari} Hari Kalender*
@@ -206,31 +237,36 @@ Gemintang Production • IT Solutions & Creative Agency`;
                   Proposal Resmi &bull; Gemintang Production
                 </h2>
                 <p className="text-[11px] font-medium text-[#64748B] line-clamp-1 sm:line-clamp-none">
-                  Format lembar A4 B2B siap cetak & simpan PDF (Presisi 1 Halaman).
+                  Format lembar A4 B2B siap cetak & simpan PDF &bull; Terintegrasi Estimasi Linimasa.
                 </p>
               </div>
             </div>
 
-            <div className="self-start sm:self-auto shrink-0">
+            <div className="self-start sm:self-auto shrink-0 flex items-center gap-2">
               {recipient.isVerified ? (
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] sm:text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
                   <FontAwesomeIcon icon={faCircleCheck} className="text-emerald-700 text-xs" />
-                  <span>Data Penerima Terverifikasi</span>
+                  <span>Data Terverifikasi</span>
                 </span>
               ) : (
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] sm:text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
                   <FontAwesomeIcon icon={faTriangleExclamation} className="text-amber-700 text-xs" />
-                  <span>Draf: Butuh Verifikasi Penerima</span>
+                  <span>Draf Penerima</span>
                 </span>
               )}
             </div>
           </div>
 
+          {/* Action Buttons: Data Penerima, Estimasi Linimasa, Salin WA, Cetak PDF */}
           <div className="grid grid-cols-2 sm:flex sm:items-center sm:justify-end gap-2 pt-1 border-t border-[#F1F5F9] sm:border-none sm:pt-0">
+            {/* Tombol Data Penerima */}
             <button
               type="button"
-              onClick={() => setShowRecipientEditor((prev) => !prev)}
-              className="flex items-center justify-center gap-2 h-9 px-3 text-xs font-bold text-[#0F172A] bg-[#F8FAFC] hover:bg-[#F1F5F9] active:bg-[#E2E8F0] rounded-lg border border-[#CBD5E1] transition-colors shadow-xs"
+              onClick={() => {
+                setShowRecipientEditor((prev) => !prev);
+                if (!showRecipientEditor) setShowTimelineEditor(false);
+              }}
+              className="flex items-center justify-center gap-1.5 h-9 px-3 text-xs font-bold text-[#0F172A] bg-[#F8FAFC] hover:bg-[#F1F5F9] active:bg-[#E2E8F0] rounded-lg border border-[#CBD5E1] transition-colors shadow-xs"
               aria-expanded={showRecipientEditor}
             >
               <FontAwesomeIcon icon={faPenToSquare} className="text-xs text-[#1D4ED8]" />
@@ -238,10 +274,32 @@ Gemintang Production • IT Solutions & Creative Agency`;
               <FontAwesomeIcon icon={showRecipientEditor ? faChevronUp : faChevronDown} className="text-[10px] text-[#64748B]" />
             </button>
 
+            {/* Tombol Estimasi Linimasa (FITUR BARU) */}
+            <button
+              type="button"
+              onClick={() => {
+                setShowTimelineEditor((prev) => !prev);
+                if (!showTimelineEditor) setShowRecipientEditor(false);
+              }}
+              className={`flex items-center justify-center gap-1.5 h-9 px-3 text-xs font-bold rounded-lg border transition-colors shadow-xs ${
+                showTimelineEditor
+                  ? "bg-[#0F172A] text-white border-[#0F172A]"
+                  : "bg-[#F8FAFC] text-[#0F172A] hover:bg-[#F1F5F9] border-[#CBD5E1]"
+              }`}
+              aria-expanded={showTimelineEditor}
+            >
+              <FontAwesomeIcon icon={faHourglassHalf} className={`text-xs ${showTimelineEditor ? "text-amber-300" : "text-amber-600"}`} />
+              <span className="truncate">Estimasi Linimasa</span>
+              <span className="bg-emerald-100 text-emerald-800 text-[10px] px-1.5 py-0.2 rounded font-black hidden md:inline">
+                {timeline.totalDays}H
+              </span>
+            </button>
+
+            {/* Tombol Salin Ringkasan WA */}
             <button
               type="button"
               onClick={handleCopyWhatsApp}
-              className="flex items-center justify-center gap-2 h-9 px-3 text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 active:bg-emerald-200 rounded-lg border border-emerald-300 transition-colors shadow-xs"
+              className="flex items-center justify-center gap-1.5 h-9 px-3 text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 active:bg-emerald-200 rounded-lg border border-emerald-300 transition-colors shadow-xs"
               title="Salin teks penawaran berformat rapi untuk dikirim via WhatsApp"
             >
               {copiedWa ? (
@@ -257,6 +315,7 @@ Gemintang Production • IT Solutions & Creative Agency`;
               )}
             </button>
 
+            {/* Tombol Cetak / PDF */}
             <button
               type="button"
               onClick={handlePrint}
@@ -268,39 +327,160 @@ Gemintang Production • IT Solutions & Creative Agency`;
           </div>
         </div>
 
-        {!recipient.isVerified && (
-          <div className="p-3 bg-amber-50 rounded-lg border border-amber-300 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-xs text-amber-900">
-            <div className="flex items-start gap-2.5">
-              <FontAwesomeIcon icon={faTriangleExclamation} className="text-amber-600 text-sm shrink-0 mt-0.5" />
+        {/* ======================================================== */}
+        {/* PANEL BARU: ESTIMASI LINIMASA PENGERJAAN INTERAKTIF      */}
+        {/* ======================================================== */}
+        {showTimelineEditor && (
+          <div className="mt-2 pt-3 border-t border-[#E2E8F0] bg-[#F8FAFC] p-3 sm:p-4 rounded-lg space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
               <div>
-                <p className="font-bold text-amber-950 text-xs">
-                  Cegah Salah Kirim: Pastikan Data Penerima Sesuai Legalitas!
+                <h3 className="text-xs font-bold text-[#0F172A] uppercase tracking-wider flex items-center gap-2">
+                  <FontAwesomeIcon icon={faHourglassHalf} className="text-amber-600 text-xs" />
+                  <span>Kalkulator & Estimasi Linimasa Pengerjaan Proyek</span>
+                </h3>
+                <p className="text-[11px] font-medium text-[#64748B]">
+                  Sesuaikan durasi hari kerja, buffer keamanan risiko revisi, dan mode pengerjaan secara real-time.
                 </p>
-                <p className="text-amber-800 text-[11px] mt-0.5 leading-snug font-medium">
-                  Masih menggunakan data contoh (<em>{recipient.companyName}</em> - <em>{recipient.picName}</em>). Periksa nama PT & PIC resmi sebelum dikirim.
+              </div>
+
+              <div className="flex items-center gap-2 text-xs">
+                <span className="text-[#64748B]">Target Selesai:</span>
+                <span className="font-extrabold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded border border-emerald-300">
+                  {timeline.targetDateDisplay}
+                </span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+              {/* 1. Mode Pengerjaan */}
+              <div className="bg-white p-2.5 rounded-lg border border-[#CBD5E1] space-y-1.5">
+                <label className="text-[11px] font-bold text-[#0F172A] block">
+                  Mode Pengerjaan:
+                </label>
+                <div className="grid grid-cols-2 gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setTimelineConfig({ ...timelineConfig, mode: "standard" })}
+                    className={`py-1.5 px-2 rounded text-xs font-bold transition-all text-center ${
+                      timelineConfig.mode === "standard"
+                        ? "bg-[#0F172A] text-white shadow-xs"
+                        : "bg-[#F1F5F9] text-[#475569] hover:bg-[#E2E8F0]"
+                    }`}
+                  >
+                    Standar (Normal)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTimelineConfig({ ...timelineConfig, mode: "express" })}
+                    className={`py-1.5 px-2 rounded text-xs font-bold transition-all text-center flex items-center justify-center gap-1 ${
+                      timelineConfig.mode === "express"
+                        ? "bg-amber-600 text-white shadow-xs"
+                        : "bg-[#F1F5F9] text-[#475569] hover:bg-[#E2E8F0]"
+                    }`}
+                  >
+                    <FontAwesomeIcon icon={faBolt} className="text-[10px]" />
+                    <span>Fast-Track</span>
+                  </button>
+                </div>
+                <p className="text-[10px] text-[#64748B]">
+                  {timelineConfig.mode === "standard"
+                    ? "Jadwal pengerjaan reguler dengan buffer waktu."
+                    : "Prioritas antrean kilat (durasi dipadatkan)."
+                  }
+                </p>
+              </div>
+
+              {/* 2. Hari Kerja Dasar */}
+              <div className="bg-white p-2.5 rounded-lg border border-[#CBD5E1] space-y-1.5">
+                <label className="text-[11px] font-bold text-[#0F172A] block">
+                  Durasi Kerja Dasar (Hari):
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min={3}
+                    max={60}
+                    value={timelineConfig.baseDays}
+                    onChange={(e) => setTimelineConfig({ ...timelineConfig, baseDays: Math.max(1, parseInt(e.target.value) || 10) })}
+                    className="w-16 text-xs font-black px-2 py-1.5 rounded bg-[#F8FAFC] border border-[#CBD5E1] text-center text-[#0F172A]"
+                  />
+                  <div className="flex flex-wrap gap-1">
+                    {[7, 10, 14, 21].map((days) => (
+                      <button
+                        key={days}
+                        type="button"
+                        onClick={() => setTimelineConfig({ ...timelineConfig, baseDays: days })}
+                        className={`px-2 py-1 text-[10px] font-bold rounded border ${
+                          timelineConfig.baseDays === days
+                            ? "bg-[#0F172A] text-white border-[#0F172A]"
+                            : "bg-[#F1F5F9] text-[#475569] border-[#CBD5E1] hover:bg-[#E2E8F0]"
+                        }`}
+                      >
+                        {days}H
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <p className="text-[10px] text-[#64748B]">
+                  Hari kerja murni tanpa menghitung keterlambatan materi.
+                </p>
+              </div>
+
+              {/* 3. Buffer Keamanan Risiko Klien */}
+              <div className="bg-white p-2.5 rounded-lg border border-[#CBD5E1] space-y-1.5">
+                <label className="text-[11px] font-bold text-[#0F172A] block">
+                  Buffer Risiko Revisi:
+                </label>
+                <div className="grid grid-cols-4 gap-1">
+                  {[0, 15, 20, 30].map((percent) => (
+                    <button
+                      key={percent}
+                      type="button"
+                      disabled={timelineConfig.mode === "express"}
+                      onClick={() => setTimelineConfig({ ...timelineConfig, bufferPercent: percent })}
+                      className={`py-1 text-[10px] font-bold rounded border transition-all text-center ${
+                        timelineConfig.bufferPercent === percent
+                          ? "bg-[#0F172A] text-white border-[#0F172A]"
+                          : "bg-[#F1F5F9] text-[#475569] border-[#CBD5E1] hover:bg-[#E2E8F0]"
+                      } ${timelineConfig.mode === "express" ? "opacity-40 cursor-not-allowed" : ""}`}
+                    >
+                      +{percent}%
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[10px] text-[#64748B]">
+                  {timelineConfig.bufferPercent > 0
+                    ? `Tambahan +${timeline.bufferDays} hari buffer antisipasi revisi & materi.`
+                    : "Tanpa buffer waktu cadangan."}
                 </p>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-2 w-full sm:w-auto shrink-0 pt-1 sm:pt-0">
-              <button
-                type="button"
-                onClick={() => setShowRecipientEditor(true)}
-                className="w-full px-2.5 py-1.5 text-xs font-bold bg-white text-amber-950 border border-amber-300 rounded hover:bg-amber-100 transition-colors text-center"
-              >
-                Koreksi Data
-              </button>
-              <button
-                type="button"
-                onClick={handleVerify}
-                className="w-full px-2.5 py-1.5 text-xs font-bold bg-emerald-700 text-white rounded hover:bg-emerald-800 transition-colors flex items-center justify-center gap-1.5 text-center"
-              >
-                <FontAwesomeIcon icon={faCheck} className="text-xs" />
-                <span>Kunci Data</span>
-              </button>
+
+            {/* Rincian 4 Milestones */}
+            <div className="bg-white p-2.5 rounded-lg border border-[#CBD5E1] space-y-2">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#475569] block">
+                Rincian 4 Tahapan Kerja (Roadmap Milestones):
+              </span>
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
+                {timeline.milestones.map((m) => (
+                  <div key={m.id} className="p-2 rounded border border-[#E2E8F0] bg-[#F8FAFC] space-y-0.5">
+                    <div className="flex items-center justify-between text-[10px] font-extrabold text-[#1D4ED8]">
+                      <span>FASE {m.phaseNumber}</span>
+                      <span className="bg-[#E2E8F0] text-[#0F172A] px-1.5 py-0.2 rounded text-[9px]">{m.dayRange}</span>
+                    </div>
+                    <div className="font-bold text-[11px] text-[#0F172A]">{m.title}</div>
+                    <div className="text-[9.5px] text-[#64748B] leading-tight">{m.activities}</div>
+                    <div className="text-[9px] font-bold text-emerald-800 pt-0.5">Output: {m.output}</div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}
 
+        {/* ======================================================== */}
+        {/* COLLAPSIBLE RECIPIENT DATA EDITOR (ANTI-ERROR FORM)      */}
+        {/* ======================================================== */}
         {showRecipientEditor && (
           <div className="mt-2 pt-3 border-t border-[#E2E8F0] bg-[#F8FAFC] p-3 sm:p-4 rounded-lg space-y-3.5">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
@@ -503,12 +683,12 @@ Gemintang Production • IT Solutions & Creative Agency`;
       <div className="bg-[#CBD5E1]/60 p-1 sm:p-5 md:p-6 rounded-xl border border-[#94A3B8] overflow-x-auto flex justify-center w-full max-w-full min-w-0 print:p-0 print:bg-white print:border-none">
         <article
           id="a4-proposal-sheet"
-          className="bg-white text-[#0F172A] border border-[#CBD5E1] shadow-xl w-full max-w-[800px] min-h-[1080px] p-4 sm:p-7 md:p-9 space-y-3 text-[11px] leading-relaxed font-sans min-w-0 print:border-none print:shadow-none print:p-0 print:m-0 print:space-y-2.5 print:max-w-full print:min-h-0"
+          className="bg-white text-[#0F172A] border border-[#CBD5E1] shadow-xl w-full max-w-[800px] min-h-[1080px] p-4 sm:p-7 md:p-9 space-y-2.5 text-[11px] leading-relaxed font-sans min-w-0 print:border-none print:shadow-none print:p-0 print:m-0 print:space-y-2 print:max-w-full print:min-h-0"
         >
           {/* ======================================================== */}
           {/* KOMPONEN 1: KOP SURAT RESMI (LOGO & BRAND LETTERHEAD)     */}
           {/* ======================================================== */}
-          <header className="border-b-2 border-[#0F172A] pb-3 flex flex-row items-start justify-between gap-4 break-inside-avoid">
+          <header className="border-b-2 border-[#0F172A] pb-2.5 flex flex-row items-start justify-between gap-4 break-inside-avoid">
             {/* Logo Resmi & Identitas Studio */}
             <div className="flex items-center gap-3">
               {isGemintangBrand ? (
@@ -626,7 +806,7 @@ Gemintang Production • IT Solutions & Creative Agency`;
                   {recipient.projectTitle}
                 </div>
                 <p className="text-[10px] font-medium text-[#475569] mt-0.5 leading-relaxed">
-                  Menetapkan spesifikasi deliverable terukur, kuota revisi resmi, dan kalkulasi biaya deterministik tanpa biaya terselubung.
+                  Menetapkan spesifikasi deliverable terukur, kuota revisi resmi, dan linimasa pengerjaan bertahap dengan buffer SLA.
                 </p>
               </div>
 
@@ -640,11 +820,11 @@ Gemintang Production • IT Solutions & Creative Agency`;
           {/* ======================================================== */}
           {/* KOMPONEN 4: KOTAK INVESTASI PROYEK & SKEMA TERMIN         */}
           {/* ======================================================== */}
-          <section className="bg-[#0F172A] text-white rounded-lg p-3 space-y-2 shadow-xs break-inside-avoid print:bg-[#0F172A] print:text-white">
+          <section className="bg-[#0F172A] text-white rounded-lg p-2.5 sm:p-3 space-y-2 shadow-xs break-inside-avoid print:bg-[#0F172A] print:text-white">
             <div className="flex items-center justify-between border-b border-white/20 pb-1">
               <span className="text-[9px] uppercase tracking-wider text-slate-300 font-bold flex items-center gap-1.5">
                 <FontAwesomeIcon icon={faWandMagicSparkles} className="text-xs text-[#FB923C]" />
-                <span>Ringkasan Nilai Investasi & Skema Termin</span>
+                <span>Ringkasan Nilai Investasi & Linimasa Pengerjaan</span>
               </span>
               <span className="text-[9px] font-bold text-emerald-300 bg-emerald-950/80 px-1.5 py-0.2 rounded border border-emerald-500">
                 Pasti &bull; Non-Estimasi
@@ -672,8 +852,8 @@ Gemintang Production • IT Solutions & Creative Agency`;
               </div>
               <div className="p-1.5 bg-white/5 sm:bg-transparent rounded sm:rounded-none space-y-0.5">
                 <span className="text-[9px] text-slate-300 font-semibold block">Estimasi Linimasa</span>
-                <span className="text-[10.5px] sm:text-xs font-bold text-emerald-300 block">
-                  {durationText}
+                <span className="text-[11px] sm:text-xs font-black text-emerald-300 tracking-tight block">
+                  {timeline.totalDays} Hari Kerja
                 </span>
               </div>
             </div>
@@ -683,6 +863,51 @@ Gemintang Production • IT Solutions & Creative Agency`;
                 * Terdapat <strong>{quotation.unconfirmedCount} item layanan</strong> berstatus estimasi terbuka yang perlu disepakati via konsultasi langsung.
               </div>
             )}
+          </section>
+
+          {/* ======================================================== */}
+          {/* KOMPONEN BARU: ROADMAP ESTIMASI TAHAPAN PENGERJAAN        */}
+          {/* ======================================================== */}
+          <section className="space-y-1.5 break-inside-avoid">
+            <div className="flex items-center justify-between">
+              <h2 className="text-[10px] sm:text-[11px] font-extrabold text-[#0F172A] uppercase tracking-wider flex items-center gap-1.5">
+                <FontAwesomeIcon icon={faHourglassHalf} className="text-xs text-[#1D4ED8]" />
+                <span>Roadmap Estimasi Linimasa Pengerjaan ({timeline.totalDays} Hari Kerja)</span>
+              </h2>
+              <span className="text-[8.5px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-300 flex items-center gap-1">
+                <FontAwesomeIcon icon={faFlagCheckered} className="text-[9px] text-emerald-700" />
+                <span>Target Selesai: {timeline.targetDateDisplay}</span>
+              </span>
+            </div>
+
+            {/* 4-Fase Milestones Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {timeline.milestones.map((m) => (
+                <div key={m.id} className="bg-[#F8FAFC] border border-[#CBD5E1] rounded-lg p-2 space-y-1 relative">
+                  <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-1">
+                    <span className="text-[9px] font-black text-[#1D4ED8]">
+                      FASE {m.phaseNumber} ({m.dayRange})
+                    </span>
+                    <span className="text-[8.5px] font-bold text-[#64748B] bg-white px-1 py-0.2 rounded border border-[#E2E8F0]">
+                      {m.durationDays} Hari
+                    </span>
+                  </div>
+                  <div className="text-[10px] font-extrabold text-[#0F172A] leading-tight">
+                    {m.title}
+                  </div>
+                  <div className="text-[8.5px] font-medium text-[#64748B] leading-tight line-clamp-2">
+                    {m.activities}
+                  </div>
+                  <div className="text-[8.5px] font-bold text-emerald-800 bg-emerald-100/70 px-1 py-0.5 rounded leading-tight">
+                    Output: {m.output}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <p className="text-[8.5px] text-[#64748B] italic leading-tight pt-0.5">
+              * {timeline.clientSlaNote}
+            </p>
           </section>
 
           {/* ======================================================== */}
@@ -738,10 +963,10 @@ Gemintang Production • IT Solutions & Creative Agency`;
                 </tbody>
                 <tfoot className="bg-[#F8FAFC] border-t-2 border-[#0F172A] text-[#0F172A]">
                   <tr>
-                    <td colSpan={4} className="py-2 px-2.5 text-right text-[10px] uppercase tracking-wider font-black text-[#0F172A]">
+                    <td colSpan={4} className="py-1.5 px-2.5 text-right text-[10px] uppercase tracking-wider font-black text-[#0F172A]">
                       Total Nilai Kontrak Investasi:
                     </td>
-                    <td className="py-2 px-2.5 text-right font-black text-xs tracking-tight text-[#0F172A]">
+                    <td className="py-1.5 px-2.5 text-right font-black text-xs tracking-tight text-[#0F172A]">
                       {quotation.subtotalDisplay}
                     </td>
                   </tr>
