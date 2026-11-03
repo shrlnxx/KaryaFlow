@@ -78,12 +78,16 @@ export function Sidebar({
           <div className="p-4 border-b border-[#E5E7EB]">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-[#171717] text-white flex items-center justify-center font-bold text-sm tracking-tight shadow-xs">
-                  KF
-                </div>
+                <img
+                  src="/logo.png"
+                  alt="KaryaFlow Logo"
+                  className="w-8 h-8 rounded-lg object-contain bg-white border border-[#E5E7EB] p-0.5 shadow-xs shrink-0"
+                />
                 <div>
                   <div className="flex items-center gap-1.5">
-                    <span className="text-sm font-bold tracking-tight text-[#171717]">KaryaFlow</span>
+                    <span className="text-sm font-bold tracking-tight text-[#1D2A4D]">
+                      Karya<span className="text-[#F26522]">Flow</span>
+                    </span>
                     <span className="text-[10px] font-medium bg-[#F1F3F5] text-[#737373] px-1.5 py-0.2 rounded">v1.2</span>
                   </div>
                   <p className="text-[11px] text-[#737373]">Scope & Margin Protection</p>

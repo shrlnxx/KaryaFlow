@@ -321,7 +321,10 @@ export function A4Proposal({
             </div>
 
             <div className="flex justify-between items-center text-[10px] font-mono text-zinc-400 pt-2 border-t border-zinc-100">
-              <div>KaryaFlow Scope Guard Protection &bull; Ekraf AI Solution</div>
+              <div className="flex items-center gap-1.5">
+                <img src="/icon.png" alt="KaryaFlow" className="w-3.5 h-3.5 object-contain inline-block" />
+                <span>KaryaFlow Scope Guard Protection &bull; Ekraf AI Solution</span>
+              </div>
               <div>Halaman 1 dari 1</div>
             </div>
           </footer>

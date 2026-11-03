@@ -70,7 +70,12 @@ export function Topbar({
           </button>
 
           {/* Mobile View: Compact Single Line Page Title */}
-          <div className="min-w-0 flex-1 sm:hidden">
+          <div className="min-w-0 flex-1 sm:hidden flex items-center gap-1.5">
+            <img
+              src="/icon.png"
+              alt="Logo KaryaFlow"
+              className="w-5 h-5 rounded object-contain shrink-0"
+            />
             <h1 className="font-semibold text-[#171717] text-xs leading-tight truncate">
               {currentMeta.title}
             </h1>
