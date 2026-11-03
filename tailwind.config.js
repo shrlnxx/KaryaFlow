@@ -27,15 +27,18 @@ module.exports = {
       },
       fontFamily: {
         sans: [
+          "var(--font-sans)",
+          "Plus Jakarta Sans",
           "Inter",
           "-apple-system",
           "BlinkMacSystemFont",
           "Segoe UI",
           "Roboto",
-          "Helvetica Neue",
           "sans-serif",
         ],
         mono: [
+          "var(--font-mono)",
+          "JetBrains Mono",
           "ui-monospace",
           "SFMono-Regular",
           "Menlo",

@@ -119,3 +119,4 @@ karyaflow/
 
 ## 📄 Lisensi
 Dikembangkan untuk kebutuhan Track AI GCC Ekraf 2026.
+
