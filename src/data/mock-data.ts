@@ -183,7 +183,7 @@ Klien: Revisinya pokoknya bebas tanpa batas sampai cocok dan omset kami naik! Se
     ],
     proposal: {
       title: "Pengembangan Website Profil & Katalog Layanan Usaha",
-      client: "PT Sentosa Ekraf Jaya (Contoh Simulasi)",
+      client: "PT Sentosa Ekraf Jaya",
       duration: "10 Hari Kerja (+ Buffer 20%)",
       validity: "14 Hari Kalender",
       exclusions: [

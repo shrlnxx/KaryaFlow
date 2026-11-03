@@ -882,11 +882,12 @@ export default function KaryaFlowDashboard() {
                 ? "PROP/GEM/2026/11/001"
                 : "PROP/MEM/2026/11/002"
             }
-            validityDays={7}
+            validityDays={14}
             durationText={brandData.proposal.duration}
             quotation={quotation}
             exclusions={brandData.proposal.exclusions}
             revisiPolicy={brandData.policy}
+            activeBrand={activeBrand}
           />
         </div>
       )}
