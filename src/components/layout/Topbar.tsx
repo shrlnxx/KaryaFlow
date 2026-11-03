@@ -1,11 +1,12 @@
 "use client";
 
 import React from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  Menu,
-  ChevronRight,
-  RotateCcw,
-} from "lucide-react";
+  faBars,
+  faChevronRight,
+  faRotateLeft,
+} from "@fortawesome/free-solid-svg-icons";
 import { NavViewId } from "./Sidebar";
 import { UMKMKey } from "../../data/mock-data";
 
@@ -66,16 +67,14 @@ export function Topbar({
             className="w-9 h-9 shrink-0 flex items-center justify-center rounded-lg border border-[#E5E7EB] text-[#737373] hover:text-[#171717] hover:bg-[#F1F3F5] active:bg-[#E5E7EB] lg:hidden focus:outline-none focus:ring-2 focus:ring-[#171717] transition-colors"
             aria-label="Buka Menu Navigasi"
           >
-            <Menu className="w-4 h-4" />
+            <FontAwesomeIcon icon={faBars} className="text-sm" />
           </button>
 
           {/* Mobile View: Compact Single Line Page Title */}
           <div className="min-w-0 flex-1 sm:hidden flex items-center gap-1.5">
-            <img
-              src="/icon.png"
-              alt="Logo KaryaFlow"
-              className="w-5 h-5 rounded object-contain shrink-0"
-            />
+            <div className="w-5 h-5 rounded bg-[#1D2A4D] text-white flex items-center justify-center shrink-0 shadow-xs">
+              <span className="text-[10px] font-bold">G</span>
+            </div>
             <h1 className="font-semibold text-[#171717] text-xs leading-tight truncate">
               {currentMeta.title}
             </h1>
@@ -85,7 +84,7 @@ export function Topbar({
           <nav aria-label="Breadcrumb" className="hidden sm:flex items-center gap-1.5 text-xs min-w-0">
             <span className="font-semibold text-[#171717] shrink-0">{studioName}</span>
             <span className="text-[#9CA3AF] shrink-0 hidden md:inline">({studioSector})</span>
-            <ChevronRight className="w-3.5 h-3.5 text-[#9CA3AF] shrink-0" />
+            <FontAwesomeIcon icon={faChevronRight} className="text-[10px] text-[#9CA3AF] shrink-0" />
             <span className="font-medium text-[#737373] truncate">
               {currentMeta.title}
             </span>
@@ -96,7 +95,7 @@ export function Topbar({
         <div className="flex items-center gap-2 shrink-0">
           {/* AI Status Badge */}
           <div
-            className="flex items-center gap-1.5 text-[11px] font-mono bg-[#F8F9FB] border border-[#E5E7EB] px-2 py-1 sm:px-2.5 sm:py-1 rounded-md text-[#525252] select-none"
+            className="flex items-center gap-1.5 text-[11px] font-bold bg-[#F8F9FB] border border-[#E5E7EB] px-2 py-1 sm:px-2.5 sm:py-1 rounded-md text-[#525252] select-none"
             title={aiStatus.label}
           >
             <span
@@ -117,7 +116,7 @@ export function Topbar({
             title="Muat Ulang Contoh Data Simulasi"
             aria-label="Muat Ulang Contoh Data Simulasi"
           >
-            <RotateCcw className="w-3.5 h-3.5 sm:w-3 sm:h-3 text-[#737373]" />
+            <FontAwesomeIcon icon={faRotateLeft} className="text-xs text-[#737373]" />
             <span className="hidden sm:inline">Muat Ulang</span>
           </button>
         </div>

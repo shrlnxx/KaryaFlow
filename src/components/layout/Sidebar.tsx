@@ -1,16 +1,17 @@
 "use client";
 
 import React from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  LayoutDashboard,
-  FileSearch,
-  Receipt,
-  FileCheck2,
-  ShieldAlert,
-  Monitor,
-  Camera,
-  X,
-} from "lucide-react";
+  faTableColumns,
+  faMagnifyingGlass,
+  faReceipt,
+  faFileCircleCheck,
+  faShieldHalved,
+  faLaptopCode,
+  faCamera,
+  faXmark,
+} from "@fortawesome/free-solid-svg-icons";
 import { UMKMKey } from "../../data/mock-data";
 
 export type NavViewId = "overview" | "brief" | "contract" | "proposal" | "guard";
@@ -36,21 +37,21 @@ export function Sidebar({
     {
       group: "WORKSPACE",
       items: [
-        { id: "overview" as NavViewId, label: "Bento Overview", icon: LayoutDashboard },
+        { id: "overview" as NavViewId, label: "Bento Overview", icon: faTableColumns },
       ],
     },
     {
       group: "ANALISIS & SCOPE",
       items: [
-        { id: "brief" as NavViewId, label: "Bedah Brief & WA", icon: FileSearch },
-        { id: "contract" as NavViewId, label: "Katalog & Nilai SKU", icon: Receipt },
+        { id: "brief" as NavViewId, label: "Bedah Brief & WA", icon: faMagnifyingGlass },
+        { id: "contract" as NavViewId, label: "Katalog & Nilai SKU", icon: faReceipt },
       ],
     },
     {
       group: "OUTPUT & PROTEKSI",
       items: [
-        { id: "proposal" as NavViewId, label: "Proposal A4 Siap Cetak", icon: FileCheck2 },
-        { id: "guard" as NavViewId, label: "Scope Guard Simulator", icon: ShieldAlert },
+        { id: "proposal" as NavViewId, label: "Proposal A4 Siap Cetak", icon: faFileCircleCheck },
+        { id: "guard" as NavViewId, label: "Scope Guard Simulator", icon: faShieldHalved },
       ],
     },
   ];
@@ -101,13 +102,13 @@ export function Sidebar({
                 className="w-8 h-8 rounded-lg flex items-center justify-center text-[#737373] hover:text-[#171717] hover:bg-[#F1F3F5] active:bg-[#E5E7EB] lg:hidden focus:outline-none focus:ring-2 focus:ring-[#171717]"
                 aria-label="Tutup Menu Navigasi"
               >
-                <X className="w-4 h-4" />
+                <FontAwesomeIcon icon={faXmark} className="text-sm" />
               </button>
             </div>
 
             {/* Profile / Persona Switcher */}
             <div className="bg-[#F8F9FB] border border-[#E5E7EB] rounded-lg p-1 space-y-0.5">
-              <span className="text-[10px] font-mono text-[#737373] px-2 py-0.5 uppercase tracking-wider block">
+              <span className="text-[10px] font-bold text-[#737373] px-2 py-0.5 uppercase tracking-wider block">
                 Studio Aktif
               </span>
               <div className="grid grid-cols-2 gap-1">
@@ -117,14 +118,14 @@ export function Sidebar({
                     onSelectBrand("gemintang");
                     if (onCloseMobile) onCloseMobile();
                   }}
-                  className={`flex items-center justify-center gap-1 px-2 py-1.5 rounded text-xs transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#171717] ${
+                  className={`flex items-center justify-center gap-1.5 px-2 py-1.5 rounded text-xs transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#171717] ${
                     activeBrand === "gemintang"
                       ? "bg-white text-[#171717] font-semibold shadow-xs border border-[#E5E7EB]"
                       : "text-[#737373] hover:text-[#171717]"
                   }`}
                   aria-pressed={activeBrand === "gemintang"}
                 >
-                  <Monitor className="w-3 h-3 text-[#2563EB]" />
+                  <FontAwesomeIcon icon={faLaptopCode} className="text-[11px] text-[#2563EB]" />
                   <span>Web Dev</span>
                 </button>
 
@@ -134,14 +135,14 @@ export function Sidebar({
                     onSelectBrand("memoku");
                     if (onCloseMobile) onCloseMobile();
                   }}
-                  className={`flex items-center justify-center gap-1 px-2 py-1.5 rounded text-xs transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#171717] ${
+                  className={`flex items-center justify-center gap-1.5 px-2 py-1.5 rounded text-xs transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#171717] ${
                     activeBrand === "memoku"
                       ? "bg-white text-[#171717] font-semibold shadow-xs border border-[#E5E7EB]"
                       : "text-[#737373] hover:text-[#171717]"
                   }`}
                   aria-pressed={activeBrand === "memoku"}
                 >
-                  <Camera className="w-3 h-3 text-[#2563EB]" />
+                  <FontAwesomeIcon icon={faCamera} className="text-[11px] text-[#2563EB]" />
                   <span>Foto/Video</span>
                 </button>
               </div>
@@ -152,12 +153,11 @@ export function Sidebar({
           <nav className="flex-1 px-3 py-4 space-y-5 overflow-y-auto" aria-label="Menu Halaman">
             {navGroups.map((group) => (
               <div key={group.group} className="space-y-1">
-                <span className="text-[10px] font-mono font-semibold text-[#9CA3AF] px-2.5 uppercase tracking-wider">
+                <span className="text-[10px] font-extrabold text-[#9CA3AF] px-2.5 uppercase tracking-wider">
                   {group.group}
                 </span>
                 <div className="space-y-0.5">
                   {group.items.map((item) => {
-                    const Icon = item.icon;
                     const isActive = activeView === item.id;
                     return (
                       <button
@@ -174,7 +174,10 @@ export function Sidebar({
                         }`}
                         aria-current={isActive ? "page" : undefined}
                       >
-                        <Icon className={`w-4 h-4 ${isActive ? "text-white" : "text-[#737373]"}`} />
+                        <FontAwesomeIcon
+                          icon={item.icon}
+                          className={`text-xs ${isActive ? "text-white" : "text-[#737373]"}`}
+                        />
                         <span>{item.label}</span>
                       </button>
                     );
@@ -186,7 +189,7 @@ export function Sidebar({
 
           {/* 3. Studio Footer Info */}
           <div className="p-3.5 border-t border-[#E5E7EB] bg-[#F8F9FB] text-xs">
-            <div className="flex items-center justify-between text-[11px] text-[#737373] font-mono">
+            <div className="flex items-center justify-between text-[11px] text-[#737373] font-semibold">
               <span>Track AI Ekraf</span>
               <span className="text-[#10B981] font-semibold">&bull; Topik 1</span>
             </div>

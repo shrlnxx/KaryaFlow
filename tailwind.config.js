@@ -27,8 +27,8 @@ module.exports = {
       },
       fontFamily: {
         sans: [
+          '"Inter"',
           '"Plus Jakarta Sans"',
-          'Inter',
           '-apple-system',
           'BlinkMacSystemFont',
           '"Segoe UI"',
@@ -36,13 +36,11 @@ module.exports = {
           'sans-serif',
         ],
         mono: [
-          '"JetBrains Mono"',
-          'ui-monospace',
-          'SFMono-Regular',
-          'Menlo',
-          'Monaco',
-          'Consolas',
-          'monospace',
+          '"Inter"',
+          'ui-sans-serif',
+          'system-ui',
+          '-apple-system',
+          'sans-serif',
         ],
       },
       borderRadius: {
