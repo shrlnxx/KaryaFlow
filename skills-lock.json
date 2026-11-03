@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "skills-qa": {
+      "source": "anthropics/claude-for-legal",
+      "sourceType": "github",
+      "skillPath": "legal-builder-hub/skills/skills-qa/SKILL.md",
+      "computedHash": "d17523f2d7bfc9f0110bf51a8ecf854ddda0438e6700ad749e69f30a721ab6e6"
+    }
+  }
+}

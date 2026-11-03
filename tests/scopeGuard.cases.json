@@ -1,0 +1,111 @@
+[
+  {
+    "id": "tc-01",
+    "brand": "gemintang",
+    "category": "covered",
+    "expectedVerdict": "covered",
+    "request": "Mas tolong ganti foto banner slider di halaman utama ya, file fotonya sudah kami upload.",
+    "expectedReasonSubstring": "revisi minor",
+    "expectedExtraCost": 0
+  },
+  {
+    "id": "tc-02",
+    "brand": "gemintang",
+    "category": "covered",
+    "expectedVerdict": "covered",
+    "request": "Ada typo penulisan alamat dan nomor telepon kantor di bagian footer, tolong dibetulkan mas.",
+    "expectedReasonSubstring": "micro-change",
+    "expectedExtraCost": 0
+  },
+  {
+    "id": "tc-03",
+    "brand": "memoku",
+    "category": "covered",
+    "expectedVerdict": "covered",
+    "request": "Mas tolong potong jeda klip detik ke-12 dan sedikit naikkan saturasi warna produknya ya.",
+    "expectedReasonSubstring": "kuota",
+    "expectedExtraCost": 0
+  },
+  {
+    "id": "tc-04",
+    "brand": "memoku",
+    "category": "covered",
+    "expectedVerdict": "covered",
+    "request": "Teks judul nama narasumber di opening video ada salah gelar, tolong diganti jadi M.Kom ya mas.",
+    "expectedReasonSubstring": "revisi",
+    "expectedExtraCost": 0
+  },
+  {
+    "id": "tc-05",
+    "brand": "gemintang",
+    "category": "out_of_scope",
+    "expectedVerdict": "out_of_scope",
+    "request": "Mas tolong sekalian buatkan modul CMS Admin Panel biar staf kami bisa upload artikel sendiri.",
+    "expectedMatchedSku": "WEB-ADD-CMS",
+    "expectedExtraCost": 1000000
+  },
+  {
+    "id": "tc-06",
+    "brand": "gemintang",
+    "category": "out_of_scope",
+    "expectedVerdict": "out_of_scope",
+    "request": "Bos kami minta tambah 2 halaman statis baru untuk profil komisaris dan portofolio anak usaha ya.",
+    "expectedMatchedSku": "WEB-ADD-PAGE",
+    "expectedExtraCost": 500000
+  },
+  {
+    "id": "tc-07",
+    "brand": "memoku",
+    "category": "out_of_scope",
+    "expectedVerdict": "out_of_scope",
+    "request": "Mas kami minta kirim seluruh master file mentah RAW foto dan rekaman video 4K tanpa kompresi ya.",
+    "expectedMatchedSku": "ADD-RAW-01",
+    "expectedExtraCost": 500000
+  },
+  {
+    "id": "tc-08",
+    "brand": "memoku",
+    "category": "out_of_scope",
+    "expectedVerdict": "out_of_scope",
+    "request": "Acara peluncuran produk kita molor 2 jam nih mas, tolong tambah lembur 2 jam liputan shooting ya.",
+    "expectedMatchedSku": "ADD-HOUR-01",
+    "expectedExtraCost": 600000
+  },
+  {
+    "id": "tc-09",
+    "brand": "gemintang",
+    "category": "ambiguous",
+    "expectedVerdict": "perlu_klarifikasi",
+    "request": "Mas halamannya bisa dibikinin filter katalog produk yang lebih interaktif dan kekinian nggak?",
+    "expectedReasonSubstring": "spesifikasi",
+    "expectedExtraCost": 0
+  },
+  {
+    "id": "tc-10",
+    "brand": "gemintang",
+    "category": "ambiguous",
+    "expectedVerdict": "perlu_klarifikasi",
+    "request": "Gimana kalau ditambah animasi transisi yang lebih mewah pas tombolnya diklik?",
+    "expectedReasonSubstring": "klarifikasi",
+    "expectedExtraCost": 0
+  },
+  {
+    "id": "tc-11",
+    "brand": "memoku",
+    "category": "ambiguous",
+    "expectedVerdict": "perlu_klarifikasi",
+    "request": "Mas video reels 1 menitnya bisa dibikinin versi Story 15 detik juga nggak?",
+    "expectedReasonSubstring": "potongan",
+    "expectedExtraCost": 0
+  },
+  {
+    "id": "tc-12",
+    "brand": "memoku",
+    "category": "ambiguous",
+    "expectedVerdict": "perlu_klarifikasi",
+    "request": "Bisa tolong buatkan format video yang cocok buat di-upload ke berbagai medsos kami?",
+    "expectedReasonSubstring": "format",
+    "expectedExtraCost": 0
+  }
+]
+

@@ -1,0 +1,177 @@
+{
+  "businesses": {
+    "gemintang": {
+      "id": "gemintang",
+      "name": "Gemintang Production",
+      "sector": "Web Development",
+      "skus": [
+        "WEB-LP-01",
+        "WEB-CP-02",
+        "WEB-ADD-PAGE",
+        "WEB-ADD-CMS",
+        "WEB-MAINT-01"
+      ]
+    },
+    "memoku": {
+      "id": "memoku",
+      "name": "MemokuVisual",
+      "sector": "Fotografi & Videografi",
+      "skus": [
+        "FOTO-EVT-01",
+        "FOTO-EVT-02",
+        "VID-HIGH-01",
+        "ADD-HOUR-01",
+        "ADD-RAW-01"
+      ]
+    }
+  },
+  "items": [
+    {
+      "sku": "WEB-LP-01",
+      "business": "Gemintang Production",
+      "business_key": "gemintang",
+      "name": "Landing Page Responsif",
+      "price": 1500000,
+      "attributes": {
+        "pages": 5,
+        "max_revisions": 2
+      },
+      "excludes": [
+        "Integrasi Payment Gateway otomatis",
+        "Penulisan copywriting & foto produk"
+      ],
+      "revision_policy": "Maksimal 2 putaran revisi minor dalam 7 hari kerja setelah staging. Garansi bug 14 hari."
+    },
+    {
+      "sku": "WEB-CP-02",
+      "business": "Gemintang Production",
+      "business_key": "gemintang",
+      "name": "Website Company Profile & Katalog",
+      "price": 3000000,
+      "attributes": {
+        "pages": 8,
+        "max_revisions": 2
+      },
+      "excludes": [
+        "Fitur keranjang belanja multi-vendor",
+        "Custom animation library tingkat lanjut"
+      ],
+      "revision_policy": "Maksimal 2 putaran revisi minor dalam 7 hari kerja setelah staging. Garansi bug 14 hari."
+    },
+    {
+      "sku": "WEB-ADD-PAGE",
+      "business": "Gemintang Production",
+      "business_key": "gemintang",
+      "name": "Tambahan Halaman Statis",
+      "price": 250000,
+      "attributes": {
+        "pages": 1,
+        "max_revisions": 1
+      },
+      "excludes": [],
+      "revision_policy": "1x penyesuaian."
+    },
+    {
+      "sku": "WEB-ADD-CMS",
+      "business": "Gemintang Production",
+      "business_key": "gemintang",
+      "name": "Modul CMS Admin Panel",
+      "price": 1000000,
+      "attributes": {
+        "modules": 1,
+        "max_revisions": 1
+      },
+      "excludes": [],
+      "revision_policy": "1x penyesuaian tata letak dashboard."
+    },
+    {
+      "sku": "WEB-MAINT-01",
+      "business": "Gemintang Production",
+      "business_key": "gemintang",
+      "name": "Maintenance & Backup Bulanan",
+      "price": 500000,
+      "attributes": {
+        "months": 1,
+        "max_revisions": 0
+      },
+      "excludes": [],
+      "revision_policy": "Tanpa revisi struktur."
+    },
+    {
+      "sku": "FOTO-EVT-01",
+      "business": "MemokuVisual",
+      "business_key": "memoku",
+      "name": "Dokumentasi Event Half-Day 4 Jam",
+      "price": 1200000,
+      "attributes": {
+        "hours": 4,
+        "edited_photos": 80,
+        "max_revisions": 1
+      },
+      "excludes": [
+        "Pengambilan gambar udara (Drone)",
+        "Cetak album fisik & bingkai"
+      ],
+      "revision_policy": "Maksimal 1x revisi minor warna dalam 7 hari."
+    },
+    {
+      "sku": "FOTO-EVT-02",
+      "business": "MemokuVisual",
+      "business_key": "memoku",
+      "name": "Dokumentasi Event Full-Day 8 Jam",
+      "price": 2200000,
+      "attributes": {
+        "hours": 8,
+        "edited_photos": 150,
+        "max_revisions": 2
+      },
+      "excludes": [
+        "Pengambilan gambar udara (Drone)",
+        "Cetak album fisik & bingkai"
+      ],
+      "revision_policy": "Maksimal 2x revisi minor warna dalam 7 hari."
+    },
+    {
+      "sku": "VID-HIGH-01",
+      "business": "MemokuVisual",
+      "business_key": "memoku",
+      "name": "Video Aftermovie / Highlight 1 Menit",
+      "price": 1500000,
+      "attributes": {
+        "duration_min": 1,
+        "max_revisions": 2
+      },
+      "excludes": [
+        "Perubahan konsep lagu setelah editing berjalan"
+      ],
+      "revision_policy": "Maksimal 2x revisi minor cut/color."
+    },
+    {
+      "sku": "ADD-HOUR-01",
+      "business": "MemokuVisual",
+      "business_key": "memoku",
+      "name": "Tambahan Jam Liputan / Overtime",
+      "price": 300000,
+      "attributes": {
+        "hours": 1,
+        "max_revisions": 0
+      },
+      "excludes": [],
+      "revision_policy": "Mengikuti jadwal liputan utama."
+    },
+    {
+      "sku": "ADD-RAW-01",
+      "business": "MemokuVisual",
+      "business_key": "memoku",
+      "name": "Lisensi Serah Terima Seluruh File Mentah/RAW",
+      "price": 500000,
+      "attributes": {
+        "raw_package": 1,
+        "max_revisions": 0
+      },
+      "excludes": [],
+      "revision_policy": "Tanpa proses editing tambahan."
+    }
+  ]
+}
+
