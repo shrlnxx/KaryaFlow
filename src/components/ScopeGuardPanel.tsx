@@ -224,11 +224,24 @@ export function ScopeGuardPanel({ activeBrand, brandName }: ScopeGuardPanelProps
     }
   };
 
-  // Copy WhatsApp draft
-  const handleCopyReply = () => {
-    navigator.clipboard?.writeText(activeResult.replyDraft);
-    setIsCopied(true);
-    setTimeout(() => setIsCopied(false), 2000);
+  // Copy WhatsApp draft to clipboard with fallback
+  const handleCopyReply = async () => {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(activeResult.replyDraft);
+      } else {
+        const tempTextArea = document.createElement("textarea");
+        tempTextArea.value = activeResult.replyDraft;
+        document.body.appendChild(tempTextArea);
+        tempTextArea.select();
+        document.execCommand("copy");
+        document.body.removeChild(tempTextArea);
+      }
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2200);
+    } catch (err) {
+      console.error("Gagal menyalin draf ke clipboard:", err);
+    }
   };
 
   // Styles based on verdict
@@ -439,35 +452,52 @@ export function ScopeGuardPanel({ activeBrand, brandName }: ScopeGuardPanelProps
       </div>
 
       {/* KOTAK DRAF BALASAN WHATSAPP SOPAN & SANTUN */}
-      <div className="bg-emerald-50/60 border border-emerald-200 rounded-lg p-4 space-y-2.5">
-        <div className="flex items-center justify-between">
+      <div className="bg-emerald-50/60 border border-emerald-200 rounded-lg p-4 space-y-3">
+        <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-950">
             <MessageSquare className="w-4 h-4 text-emerald-600" />
             <span>Draf Balasan WhatsApp Santun ke Klien (Siap Kirim)</span>
           </div>
-          <span className="text-[10px] text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded font-mono">
-            Rekomendasi Sopan PRD B6
+          <span className="text-[10px] text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded font-mono font-medium">
+            Edit Manual Aktif
           </span>
         </div>
 
-        <div className="p-3 bg-white rounded border border-emerald-200 text-xs font-mono text-zinc-800 leading-relaxed shadow-xs">
-          {activeResult.replyDraft}
+        <div className="space-y-1">
+          <label htmlFor="scope-guard-reply-draft" className="text-[11px] font-semibold text-emerald-900 block">
+            Sesuaikan / Edit Draf Balasan:
+          </label>
+          <textarea
+            id="scope-guard-reply-draft"
+            rows={4}
+            value={activeResult.replyDraft}
+            onChange={(e) => {
+              const newDraft = e.target.value;
+              setActiveResult((prev) => ({ ...prev, replyDraft: newDraft }));
+            }}
+            placeholder="Edit draf balasan WhatsApp di sini..."
+            className="w-full p-3 bg-white rounded-md border border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-xs font-sans text-zinc-900 leading-relaxed shadow-xs resize-y min-h-[90px] transition-all"
+          />
         </div>
 
         <button
           type="button"
           onClick={handleCopyReply}
-          className="w-full flex items-center justify-center gap-1.5 h-9 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded transition-colors shadow-xs cursor-pointer"
+          className={`w-full flex items-center justify-center gap-2 h-9 text-xs font-semibold rounded transition-colors shadow-xs cursor-pointer ${
+            isCopied
+              ? "bg-emerald-700 text-white"
+              : "bg-emerald-600 hover:bg-emerald-700 text-white"
+          }`}
         >
           {isCopied ? (
             <>
-              <Check className="w-4 h-4" />
+              <Check className="w-4 h-4 text-emerald-200" />
               <span>Draf Balasan Tersalin ke Clipboard!</span>
             </>
           ) : (
             <>
               <Copy className="w-4 h-4" />
-              <span>Salin Balasan ke WhatsApp</span>
+              <span>Copy to Clipboard</span>
             </>
           )}
         </button>

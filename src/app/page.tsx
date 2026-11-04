@@ -22,6 +22,7 @@ import {
   Clock,
   Layers,
   UploadCloud,
+  Search,
 } from "lucide-react";
 import { ImageDropzone, UploadedImageData } from "../components/ui/ImageDropzone";
 import {
@@ -72,8 +73,14 @@ export default function KaryaFlowDashboard() {
   // Status & interactive feedback
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
   const [isWaCopied, setIsWaCopied] = useState<boolean>(false);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<{
+    text: string;
+    isError?: boolean;
+  } | null>(null);
+  const [aiErrorAlert, setAiErrorAlert] = useState<string | null>(null);
   const [showAddCatalog, setShowAddCatalog] = useState<boolean>(false);
+  const [catalogSearch, setCatalogSearch] = useState<string>("");
+  const [catalogCategory, setCatalogCategory] = useState<string>("all");
 
   const [aiStatus, setAiStatus] = useState<{
     live: boolean;
@@ -94,6 +101,24 @@ export default function KaryaFlowDashboard() {
     return catalogData.items.filter((item) => item.business_key === activeBrand);
   }, [activeBrand]);
 
+  const filteredCatalog = useMemo(() => {
+    return activeBrandCatalog.filter((item) => {
+      const q = catalogSearch.trim().toLowerCase();
+      const matchesSearch =
+        q === "" ||
+        item.name.toLowerCase().includes(q) ||
+        item.sku.toLowerCase().includes(q) ||
+        item.revision_policy.toLowerCase().includes(q) ||
+        JSON.stringify(item.attributes).toLowerCase().includes(q);
+
+      const itemCat = (item as any).category || "feature";
+      const matchesCategory =
+        catalogCategory === "all" || itemCat === catalogCategory;
+
+      return matchesSearch && matchesCategory;
+    });
+  }, [activeBrandCatalog, catalogSearch, catalogCategory]);
+
   const briefStats = useMemo(() => {
     const merah = currentBriefChips.filter((c) => c.level === "merah").length;
     const kuning = currentBriefChips.filter((c) => c.level === "kuning").length;
@@ -109,6 +134,72 @@ export default function KaryaFlowDashboard() {
       hijauPct: (hijau / total) * 100,
     };
   }, [currentBriefChips]);
+
+  // Business Impact Calculation for Risk Radar
+  const BIAYA_PER_REVISI = 250000;
+  const jumlah_rawan = briefStats.merah;
+  const jumlah_ambigu = briefStats.kuning;
+  const potensiKerugian = (jumlah_rawan + jumlah_ambigu) * BIAYA_PER_REVISI;
+
+  // Auto-hitung totalKontrak client-side (tanpa DB)
+  const totalKontrak = useMemo(() => {
+    return items.reduce((sum, line) => {
+      const cat = catalogData.items.find((c) => c.sku === line.sku);
+      const unitPrice = cat ? cat.price : 0;
+      return sum + unitPrice * (line.quantity ?? 1);
+    }, 0);
+  }, [items]);
+
+  const dp50 = Math.round(totalKontrak * 0.5);
+  const pelunasan = totalKontrak - dp50;
+
+  // Toggle checkbox katalog
+  const handleToggleCheckbox = (cat: typeof catalogData.items[0]) => {
+    const existingIndex = items.findIndex((i) => i.sku === cat.sku);
+    if (existingIndex >= 0) {
+      setItems((prev) => prev.filter((i) => i.sku !== cat.sku));
+      triggerToast(`${cat.name} dihapus dari pilihan`);
+    } else {
+      const newItem: WorkspaceLineItem = {
+        id: `${cat.sku}-${Date.now()}`,
+        sku: cat.sku,
+        name: cat.name,
+        quantity: 1,
+        deliverable: Object.entries(cat.attributes)
+          .map(([k, v]) => `${k}: ${v}`)
+          .join(", "),
+        notes: cat.revision_policy,
+      };
+      setItems((prev) => [...prev, newItem]);
+      triggerToast(`${cat.name} ditambahkan`);
+    }
+  };
+
+  const handleSelectAllSkus = () => {
+    const existingSkus = new Set(items.map((i) => i.sku));
+    const toAdd: WorkspaceLineItem[] = [];
+    activeBrandCatalog.forEach((cat) => {
+      if (!existingSkus.has(cat.sku)) {
+        toAdd.push({
+          id: `${cat.sku}-${Date.now()}`,
+          sku: cat.sku,
+          name: cat.name,
+          quantity: 1,
+          deliverable: Object.entries(cat.attributes)
+            .map(([k, v]) => `${k}: ${v}`)
+            .join(", "),
+          notes: cat.revision_policy,
+        });
+      }
+    });
+    setItems((prev) => [...prev, ...toAdd]);
+    triggerToast(`Seluruh (${activeBrandCatalog.length}) layanan dicentang`);
+  };
+
+  const handleClearAllSkus = () => {
+    setItems([]);
+    triggerToast("Pilihan layanan dikosongkan");
+  };
 
   // Brand Switching Handler
   const handleSwitchBrand = (brandKey: UMKMKey) => {
@@ -133,9 +224,9 @@ export default function KaryaFlowDashboard() {
     triggerToast("Data simulasi diatur ulang ke kondisi awal");
   };
 
-  const triggerToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 2400);
+  const triggerToast = (msg: string, isError = false) => {
+    setToastMessage({ text: msg, isError });
+    setTimeout(() => setToastMessage(null), isError ? 3400 : 2500);
   };
 
   const handleUpdateQty = (id: string, delta: number) => {
@@ -202,26 +293,37 @@ export default function KaryaFlowDashboard() {
   };
 
   const handleRunAiAnalysis = async () => {
-    if (activeInputMode === "upload" && !uploadedImage) {
-      triggerToast("Pilih atau tempel screenshot chat WhatsApp terlebih dahulu.");
-      return;
-    }
-    if (activeInputMode === "text" && !inputBriefText.trim()) {
-      triggerToast("Ketik atau tempel teks obrolan WhatsApp terlebih dahulu.");
-      return;
+    // 1. Validasi input: cegah fetch dan munculkan toast error jika teks < 10 karakter
+    if (activeInputMode === "upload") {
+      if (!uploadedImage) {
+        triggerToast("Pilih atau upload screenshot chat WhatsApp terlebih dahulu.", true);
+        return;
+      }
+    } else {
+      const trimmedText = inputBriefText.trim();
+      if (trimmedText.length < 10) {
+        triggerToast("Teks brief minimal 10 karakter untuk dianalisis AI.", true);
+        return;
+      }
     }
 
     setIsAnalyzing(true);
+    setAiErrorAlert(null); // Bersihkan error alert sebelumnya
     triggerToast(
       activeInputMode === "upload"
         ? "Gemini AI sedang membaca & menganalisis screenshot WA..."
         : "Memanggil Gemini AI membedah brief..."
     );
 
+    // Timeout protection: abort jika melebihi 25 detik
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 25000);
+
     try {
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
         body: JSON.stringify({
           brand: activeBrand,
           chatText: activeInputMode === "text" ? inputBriefText : undefined,
@@ -230,7 +332,17 @@ export default function KaryaFlowDashboard() {
         }),
       });
 
+      clearTimeout(timeoutId);
+
+      if (!res.ok) {
+        throw new Error(`Server returned HTTP ${res.status}`);
+      }
+
       const data = await res.json();
+
+      if (!data || typeof data !== "object") {
+        throw new Error("Format respons API tidak valid");
+      }
 
       if (data.briefChips && Array.isArray(data.briefChips)) {
         setCustomBriefChips(data.briefChips);
@@ -250,10 +362,26 @@ export default function KaryaFlowDashboard() {
         setAiStatus({ live: true, label: data.modelUsed || "Gemini Multimodal Live" });
         triggerToast("Analisis Gemini AI Berhasil!");
       }
-    } catch (err) {
-      console.warn("AI analyze error:", err);
-      setAiStatus({ live: false, label: "Offline Safe Mode" });
-      triggerToast("Koneksi dialihkan ke Fallback");
+    } catch (err: any) {
+      clearTimeout(timeoutId);
+      console.warn("AI analyze error / timeout:", err);
+
+      // Pastikan isLoading false & cegah UI crash (white screen)
+      setIsAnalyzing(false);
+
+      // Pertahankan data yang ada agar tidak blank/white screen
+      const fallback = MOCK_SCENARIOS[activeBrand];
+      if (!customBriefChips) {
+        setCustomBriefChips(fallback.briefChips);
+      }
+      if (items.length === 0) {
+        setItems(fallback.initialItems);
+      }
+      setAiStatus({ live: false, label: "Sistem AI Sibuk" });
+
+      // Render komponen alert "Sistem AI sibuk, coba lagi nanti."
+      setAiErrorAlert("Sistem AI sibuk, coba lagi nanti.");
+      triggerToast("Sistem AI sibuk, coba lagi nanti.", true);
     } finally {
       setIsAnalyzing(false);
     }
@@ -276,10 +404,18 @@ export default function KaryaFlowDashboard() {
       {toastMessage && (
         <div
           role="status"
-          className="fixed bottom-5 right-5 z-50 bg-[#171717] text-white text-xs px-3.5 py-2.5 rounded-lg shadow-popover font-medium animate-in fade-in slide-in-from-bottom-2 flex items-center gap-2 border border-[#262626]"
+          className={`fixed bottom-5 right-5 z-50 text-xs px-3.5 py-2.5 rounded-lg shadow-popover font-medium animate-in fade-in slide-in-from-bottom-2 flex items-center gap-2 border ${
+            toastMessage.isError
+              ? "bg-rose-950 text-rose-100 border-rose-800"
+              : "bg-[#171717] text-white border-[#262626]"
+          }`}
         >
-          <CheckCircle2 className="w-3.5 h-3.5 text-[#10B981]" />
-          <span>{toastMessage}</span>
+          {toastMessage.isError ? (
+            <AlertTriangle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+          ) : (
+            <CheckCircle2 className="w-3.5 h-3.5 text-[#10B981] shrink-0" />
+          )}
+          <span>{toastMessage.text}</span>
         </div>
       )}
 
@@ -328,11 +464,16 @@ export default function KaryaFlowDashboard() {
             <BentoCard className="md:col-span-1 xl:col-span-4 flex flex-col justify-between">
               <BentoHeader
                 title="Radar Risiko Brief"
-                subtitle={`${currentBriefChips.length} frasa teranalisis AI`}
+                subtitle={`Konteks Evaluasi: Gemintang Production • ${currentBriefChips.length} frasa teranalisis AI`}
                 badge={
-                  <span className="text-[11px] font-mono font-medium text-[#737373]">
-                    {briefStats.merah > 0 ? `${briefStats.merah} Rawan` : "Aman"}
-                  </span>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-[10px] font-bold bg-[#1D2A4D]/10 text-[#1D2A4D] px-2 py-0.5 rounded border border-[#1D2A4D]/20">
+                      Gemintang Production
+                    </span>
+                    <span className="text-[11px] font-semibold text-[#737373]">
+                      {briefStats.merah > 0 ? `${briefStats.merah} Rawan` : "Aman"}
+                    </span>
+                  </div>
                 }
               />
               <div className="space-y-2.5 my-2">
@@ -341,19 +482,34 @@ export default function KaryaFlowDashboard() {
                   <div style={{ width: `${briefStats.kuningPct}%` }} className="bg-[#F59E0B]" />
                   <div style={{ width: `${briefStats.hijauPct}%` }} className="bg-[#10B981]" />
                 </div>
-                <div className="flex items-center justify-between text-xs font-mono">
-                  <span className="text-[#EF4444] font-medium flex items-center gap-1">
+                <div className="flex items-center justify-between text-xs font-semibold">
+                  <span className="text-[#EF4444] flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-[#EF4444]" />
                     {briefStats.merah} Rawan
                   </span>
-                  <span className="text-[#F59E0B] font-medium flex items-center gap-1">
+                  <span className="text-[#F59E0B] flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-[#F59E0B]" />
                     {briefStats.kuning} Ambigu
                   </span>
-                  <span className="text-[#10B981] font-medium flex items-center gap-1">
+                  <span className="text-[#10B981] flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-[#10B981]" />
                     {briefStats.hijau} Terukur
                   </span>
+                </div>
+
+                {/* Business Impact Calculation Alert Box (Emerald/Green Tailwind) */}
+                <div className="mt-3 p-3 bg-emerald-50 border border-emerald-300 rounded-lg text-emerald-950 shadow-xs flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-md bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                    <ShieldCheck className="w-4 h-4 text-white" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block">
+                      Business Impact &bull; Gemintang Production
+                    </span>
+                    <span className="text-xs sm:text-sm font-black text-emerald-950 block truncate">
+                      Nilai Margin/Waktu yang Diselamatkan: Rp {potensiKerugian.toLocaleString("id-ID")}
+                    </span>
+                  </div>
                 </div>
               </div>
               <p className="text-xs text-[#737373] leading-relaxed pt-2 border-t border-[#F1F3F5]">
@@ -480,6 +636,33 @@ export default function KaryaFlowDashboard() {
                 subtitle="Gemini AI membaca screenshot chat atau teks obrolan untuk menganalisis kebutuhan sebenarnya"
               />
 
+              {/* Komponen Alert jika Sistem AI Sibuk / Timeout / Error */}
+              {aiErrorAlert && (
+                <div
+                  role="alert"
+                  className="mb-3.5 p-3.5 bg-rose-50 border border-rose-300 rounded-lg text-rose-950 flex items-start gap-2.5 animate-in fade-in duration-150"
+                >
+                  <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-bold text-rose-950">
+                        {aiErrorAlert}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setAiErrorAlert(null)}
+                        className="text-[10px] text-rose-700 hover:text-rose-950 font-semibold cursor-pointer underline"
+                      >
+                        Tutup
+                      </button>
+                    </div>
+                    <p className="text-[11px] text-rose-800 mt-0.5 leading-relaxed">
+                      Layanan AI sedang mengalami antrean tinggi atau waktu pemrosesan melebihi batas. Sesi data Anda tetap aman dan Anda dapat mencoba kembali sesaat lagi.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Dual-Mode Tab Switcher */}
               <div className="flex items-center gap-1 p-1 bg-[#F1F3F5] rounded-lg mb-3.5">
                 <button
@@ -536,7 +719,7 @@ export default function KaryaFlowDashboard() {
                   type="button"
                   disabled={
                     isAnalyzing ||
-                    (activeInputMode === "upload" ? !uploadedImage : !inputBriefText.trim())
+                    (activeInputMode === "upload" && !uploadedImage)
                   }
                   onClick={handleRunAiAnalysis}
                   className="w-full sm:w-auto h-9 px-4 rounded-lg bg-[#171717] hover:bg-[#262626] text-white text-xs font-semibold flex items-center justify-center gap-2 transition-colors disabled:opacity-40 cursor-pointer shadow-xs"
@@ -693,177 +876,340 @@ export default function KaryaFlowDashboard() {
         <div className="space-y-4 sm:space-y-6 animate-in fade-in duration-150 min-w-0 w-full">
           <BentoCard>
             <BentoHeader
-              title={`Daftar Layanan & SKU Resmi (${brandData.name})`}
-              subtitle="Sesuaikan kuantitas; angka rupiah dihitung 100% deterministik oleh kode."
-              action={
-                <button
-                  type="button"
-                  onClick={() => setShowAddCatalog(!showAddCatalog)}
-                  className="h-8 px-3 rounded-lg border border-[#E5E7EB] hover:border-[#171717] bg-white text-xs font-semibold text-[#171717] flex items-center gap-1.5 cursor-pointer transition-colors"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Tambah SKU Katalog</span>
-                </button>
+              title={`Katalog SKU & Checkbox Layanan (${brandData.name})`}
+              subtitle="Pilih dan centang layanan proyek. Kalkulasi total kontrak, DP 50%, dan pelunasan dihitung 100% otomatis di sisi client (tanpa database)."
+              badge={
+                <span className="text-[11px] font-mono bg-emerald-100 text-emerald-900 border border-emerald-300 px-2.5 py-0.5 rounded font-semibold">
+                  Auto-Hitung Client-Side
+                </span>
               }
             />
 
-            {/* Add SKU Tray */}
-            {showAddCatalog && (
-              <div className="p-3.5 sm:p-4 mb-4 bg-[#F8F9FB] border border-[#E5E7EB] rounded-lg space-y-3 animate-in fade-in duration-150">
-                <div className="flex items-center justify-between text-xs font-semibold text-[#171717] flex-wrap gap-2">
-                  <span>Pilih dari Katalog Resmi {brandData.name} ({activeBrandCatalog.length} SKU)</span>
-                  <button
-                    type="button"
-                    onClick={() => setShowAddCatalog(false)}
-                    className="text-xs text-[#737373] hover:text-[#171717]"
-                  >
-                    Tutup
-                  </button>
+            {/* Reaktif Financial Banner: Total Kontrak, DP 50%, Pelunasan */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 bg-emerald-50/80 border border-emerald-300 rounded-xl text-emerald-950 shadow-xs my-4">
+              {/* Total Nilai Kontrak */}
+              <div className="p-3.5 bg-white rounded-lg border border-emerald-200 flex flex-col justify-between shadow-xs">
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 block">
+                    Total Nilai Kontrak
+                  </span>
+                  <span className="text-xl sm:text-2xl font-black text-emerald-950 font-mono tabular-nums block mt-1">
+                    {formatRupiah(totalKontrak)}
+                  </span>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-56 overflow-y-auto pr-1">
-                  {activeBrandCatalog.map((cat) => (
-                    <div
-                      key={cat.sku}
-                      className="p-2.5 bg-white border border-[#E5E7EB] rounded-md flex items-center justify-between gap-2 text-xs min-w-0"
-                    >
-                      <div className="min-w-0 flex-1">
-                        <span className="font-mono text-[10px] text-[#737373] block">{cat.sku}</span>
-                        <span className="font-semibold text-[#171717] truncate block">{cat.name}</span>
-                        <span className="font-mono font-bold text-[#2563EB] text-[11px]">{formatRupiah(cat.price)}</span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleAddSku(cat)}
-                        className="h-7 px-2.5 text-[11px] bg-[#171717] hover:bg-[#262626] text-white rounded font-medium cursor-pointer shrink-0"
-                      >
-                        + Tambah
-                      </button>
-                    </div>
-                  ))}
+                <div className="mt-2.5 pt-2 border-t border-emerald-100 flex items-center justify-between text-[11px] text-emerald-800">
+                  <span>Layanan Terpilih:</span>
+                  <span className="font-bold font-mono bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                    {items.length} SKU Aktif
+                  </span>
                 </div>
               </div>
-            )}
 
-            {/* Table with responsive horizontal scroll */}
-            <div className="overflow-x-auto border border-[#E5E7EB] rounded-lg w-full max-w-full min-w-0">
-              <table className="w-full text-left text-xs min-w-[560px]">
-                <thead>
-                  <tr className="border-b border-[#E5E7EB] bg-[#F8F9FB] text-[#737373] font-mono text-[11px] uppercase">
-                    <th className="py-3 px-4">Layanan & Spesifikasi</th>
-                    <th className="py-3 px-3 text-center w-28">Kuantitas</th>
-                    <th className="py-3 px-4 text-right">Tarif Satuan</th>
-                    <th className="py-3 px-4 text-right">Subtotal</th>
-                    <th className="py-3 px-3 text-center w-12" />
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#F1F3F5] bg-white">
-                  {quotation.items.map((lineItem, idx) => {
-                    const original = items[idx];
-                    const itemId = original?.id || `item-${idx}`;
+              {/* DP 50% */}
+              <div className="p-3.5 bg-white rounded-lg border border-emerald-200 flex flex-col justify-between shadow-xs">
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#1D2A4D] block">
+                    Uang Muka Terhitung
+                  </span>
+                  <span className="text-xl sm:text-2xl font-black text-[#1D2A4D] font-mono tabular-nums block mt-1">
+                    DP 50%: {formatRupiah(dp50)}
+                  </span>
+                </div>
+                <div className="mt-2.5 pt-2 border-t border-emerald-100 text-[11px] text-zinc-500">
+                  Wajib dibayar sebelum kickoff pengerjaan
+                </div>
+              </div>
 
-                    return (
-                      <tr key={itemId} className="hover:bg-[#F8F9FB] transition-colors">
-                        <td className="py-3 px-4 space-y-0.5">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span
-                              className={`font-mono text-[10px] font-semibold px-1.5 py-0.5 rounded ${
-                                lineItem.isUnconfirmed
-                                  ? "bg-[#FEF3C7] text-[#92400E]"
-                                  : "bg-[#F1F3F5] text-[#525252]"
-                              }`}
-                            >
-                              {lineItem.sku}
-                            </span>
-                            <span className="font-semibold text-[#171717]">{lineItem.name}</span>
-                          </div>
-                          {original?.deliverable && (
-                            <p className="text-[11px] text-[#737373] leading-tight">
-                              {original.deliverable}
-                            </p>
-                          )}
-                        </td>
-
-                        <td className="py-3 px-3 text-center">
-                          <div className="inline-flex items-center border border-[#D1D5DB] rounded-md bg-white">
-                            <button
-                              type="button"
-                              onClick={() => handleUpdateQty(itemId, -1)}
-                              disabled={lineItem.quantity <= 1}
-                              className="w-6 h-6 flex items-center justify-center text-[#737373] hover:text-[#171717] disabled:opacity-30 cursor-pointer"
-                            >
-                              <Minus className="w-3 h-3" />
-                            </button>
-                            <span className="w-7 text-center font-mono font-bold text-xs text-[#171717]">
-                              {lineItem.quantity}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => handleUpdateQty(itemId, 1)}
-                              className="w-6 h-6 flex items-center justify-center text-[#737373] hover:text-[#171717] cursor-pointer"
-                            >
-                              <Plus className="w-3 h-3" />
-                            </button>
-                          </div>
-                        </td>
-
-                        <td className="py-3 px-4 text-right font-mono text-[#525252]">
-                          {lineItem.unitPriceDisplay}
-                        </td>
-
-                        <td className="py-3 px-4 text-right">
-                          {lineItem.isUnconfirmed ? (
-                            <span className="text-[10px] font-mono text-[#B45309] bg-[#FEF3C7] px-2 py-0.5 rounded font-semibold">
-                              Perlu konfirmasi
-                            </span>
-                          ) : (
-                            <span className="font-mono font-bold text-[#171717]">
-                              {lineItem.lineTotalDisplay}
-                            </span>
-                          )}
-                        </td>
-
-                        <td className="py-3 px-3 text-center">
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteItem(itemId)}
-                            className="text-[#9CA3AF] hover:text-[#EF4444] cursor-pointer transition-colors"
-                            title="Hapus baris"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-                <tfoot>
-                  <tr className="border-t-2 border-[#171717] bg-[#F8F9FB] font-bold text-xs">
-                    <td colSpan={3} className="py-3.5 px-4 text-right text-[#525252]">
-                      Total Nilai Kontrak (Terkonfirmasi):
-                    </td>
-                    <td className="py-3.5 px-4 text-right font-mono text-base text-[#2563EB]">
-                      {quotation.subtotalDisplay}
-                    </td>
-                    <td />
-                  </tr>
-                </tfoot>
-              </table>
+              {/* Pelunasan */}
+              <div className="p-3.5 bg-white rounded-lg border border-emerald-200 flex flex-col justify-between shadow-xs">
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-700 block">
+                    Sisa Pembayaran Proyek
+                  </span>
+                  <span className="text-xl sm:text-2xl font-black text-zinc-900 font-mono tabular-nums block mt-1">
+                    Pelunasan: {formatRupiah(pelunasan)}
+                  </span>
+                </div>
+                <div className="mt-2.5 pt-2 border-t border-emerald-100 text-[11px] text-zinc-500">
+                  Dibayar setelah staging & serah terima
+                </div>
+              </div>
             </div>
 
-            <div className="mt-4 pt-4 border-t border-[#F1F3F5] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            {/* Filter, Search & Quick Selection Controls */}
+            <div className="space-y-3 mb-4">
+              <div className="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center justify-between">
+                {/* Category Pills */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {[
+                    { id: "all", label: `Semua (${activeBrandCatalog.length})` },
+                    { id: "core", label: "Paket Pokok" },
+                    { id: "feature", label: "Fitur Mikro" },
+                    { id: "addon", label: "Add-on & Maintenance" },
+                  ].map((tab) => (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setCatalogCategory(tab.id)}
+                      className={`text-[11px] px-2.5 py-1 rounded-md font-medium transition-colors cursor-pointer ${
+                        catalogCategory === tab.id
+                          ? "bg-[#171717] text-white shadow-xs"
+                          : "bg-white border border-[#E5E7EB] text-[#737373] hover:text-[#171717] hover:border-[#171717]"
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleSelectAllSkus}
+                    className="text-[11px] font-semibold text-[#171717] bg-[#F1F3F5] hover:bg-[#E5E7EB] px-2.5 py-1.5 rounded transition-colors cursor-pointer"
+                  >
+                    Pilih Semua
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleClearAllSkus}
+                    className="text-[11px] font-medium text-rose-600 hover:text-rose-700 hover:bg-rose-50 px-2 py-1.5 rounded transition-colors cursor-pointer"
+                  >
+                    Kosongkan
+                  </button>
+                </div>
+              </div>
+
+              {/* Search Bar */}
+              <div className="relative w-full">
+                <Search className="w-4 h-4 text-[#737373] absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={catalogSearch}
+                  onChange={(e) => setCatalogSearch(e.target.value)}
+                  placeholder="Ketik kata kunci layanan (mis. cms, notif email, dashboard, payment, seo)..."
+                  className="w-full text-xs pl-9 pr-3 py-2 rounded-lg border border-[#E5E7EB] bg-white focus:outline-none focus:ring-1 focus:ring-[#1D2A4D] focus:border-[#1D2A4D] transition-colors"
+                />
+              </div>
+            </div>
+
+            {/* Checkbox List Layanan (Katalog SKU) */}
+            <div className="space-y-2.5 max-h-[520px] overflow-y-auto pr-1">
+              {filteredCatalog.map((cat) => {
+                const existing = items.find((i) => i.sku === cat.sku);
+                const isChecked = Boolean(existing);
+                const qty = existing?.quantity ?? 1;
+                const lineTotal = cat.price * qty;
+
+                return (
+                  <div
+                    key={cat.sku}
+                    onClick={() => handleToggleCheckbox(cat)}
+                    className={`p-3.5 sm:p-4 rounded-xl border transition-all cursor-pointer ${
+                      isChecked
+                        ? "border-emerald-500 bg-emerald-50/25 ring-1 ring-emerald-500/30 shadow-xs"
+                        : "border-[#E5E7EB] bg-white hover:border-[#D1D5DB]"
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      {/* Checkbox control */}
+                      <div className="mt-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+                        <label className="flex items-center cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => handleToggleCheckbox(cat)}
+                            className="w-4 h-4 rounded text-emerald-600 border-zinc-300 focus:ring-emerald-500 cursor-pointer accent-emerald-600"
+                          />
+                        </label>
+                      </div>
+
+                      {/* Info & Details */}
+                      <div className="min-w-0 flex-1 space-y-1">
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#F1F3F5] text-[#171717]">
+                              {cat.sku}
+                            </span>
+                            <span className="font-bold text-xs sm:text-sm text-[#171717]">
+                              {cat.name}
+                            </span>
+                            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-[#1D2A4D]/10 text-[#1D2A4D]">
+                              {(cat as any).category === "core"
+                                ? "Paket Pokok"
+                                : (cat as any).category === "feature"
+                                ? "Fitur Mikro"
+                                : "Add-on"}
+                            </span>
+                          </div>
+
+                          <div className="text-right">
+                            <span className="font-mono font-bold text-xs sm:text-sm text-[#2563EB]">
+                              {formatRupiah(cat.price)}
+                            </span>
+                            <span className="text-[10px] text-[#737373] block">/ unit</span>
+                          </div>
+                        </div>
+
+                        <p className="text-xs text-[#737373] leading-relaxed">
+                          {cat.revision_policy}
+                        </p>
+
+                        {/* Interactive Quantity & Subtotal Bar when checked */}
+                        {isChecked && (
+                          <div
+                            onClick={(e) => e.stopPropagation()}
+                            className="flex items-center justify-between pt-2.5 mt-2 border-t border-emerald-200/70 flex-wrap gap-2 animate-in fade-in duration-100"
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-semibold text-emerald-950">
+                                Kuantitas:
+                              </span>
+                              <div className="inline-flex items-center border border-emerald-300 rounded-md bg-white">
+                                <button
+                                  type="button"
+                                  onClick={() => handleUpdateQty(existing!.id, -1)}
+                                  disabled={qty <= 1}
+                                  className="w-7 h-7 flex items-center justify-center text-zinc-600 hover:text-black disabled:opacity-30 cursor-pointer"
+                                  title="Kurangi kuantitas"
+                                >
+                                  <Minus className="w-3.5 h-3.5" />
+                                </button>
+                                <span className="w-8 text-center font-mono font-bold text-xs text-emerald-950">
+                                  {qty}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleUpdateQty(existing!.id, 1)}
+                                  className="w-7 h-7 flex items-center justify-center text-zinc-600 hover:text-black cursor-pointer"
+                                  title="Tambah kuantitas"
+                                >
+                                  <Plus className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </div>
+
+                            <div className="text-right">
+                              <span className="text-[10px] text-emerald-800 uppercase block font-semibold">
+                                Subtotal Baris Terhitung:
+                              </span>
+                              <span className="font-mono font-black text-sm text-emerald-950">
+                                {formatRupiah(lineTotal)}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {filteredCatalog.length === 0 && (
+                <div className="py-12 text-center text-xs text-[#737373] bg-[#F8F9FB] rounded-lg border border-[#E5E7EB]">
+                  Tidak ada layanan katalog yang cocok dengan filter &ldquo;{catalogSearch}&rdquo;.
+                </div>
+              )}
+            </div>
+
+            {/* Bottom Navigation to Proposal */}
+            <div className="mt-5 pt-4 border-t border-[#F1F3F5] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <span className="text-xs text-[#737373]">
-                Total di atas otomatis tertuang ke lembaran Proposal A4
+                Hasil pilihan layanan & kalkulasi kontrak di atas langsung disinkronkan ke Proposal A4.
               </span>
               <button
                 type="button"
                 onClick={() => setActiveView("proposal")}
                 className="w-full sm:w-auto h-9 px-4 rounded-lg bg-[#171717] hover:bg-[#262626] text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
               >
-                <span>Buka Lembar Proposal A4</span>
+                <span>Lihat di Lembar Proposal A4</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
           </BentoCard>
+
+          {/* Supplementary Table of Final Selected Lines */}
+          {items.length > 0 && (
+            <BentoCard>
+              <BentoHeader
+                title="Rincian Item Kontrak Terpilih"
+                subtitle="Ringkasan spesifikasi deliverable dari seluruh layanan yang dicentang."
+              />
+              <div className="overflow-x-auto border border-[#E5E7EB] rounded-lg w-full max-w-full min-w-0 my-3">
+                <table className="w-full text-left text-xs min-w-[560px]">
+                  <thead>
+                    <tr className="border-b border-[#E5E7EB] bg-[#F8F9FB] text-[#737373] font-mono text-[11px] uppercase">
+                      <th className="py-3 px-4">Layanan & Deliverable</th>
+                      <th className="py-3 px-3 text-center w-24">Qty</th>
+                      <th className="py-3 px-4 text-right">Tarif Satuan</th>
+                      <th className="py-3 px-4 text-right">Subtotal</th>
+                      <th className="py-3 px-3 text-center w-12" />
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#F1F3F5] bg-white">
+                    {quotation.items.map((lineItem, idx) => {
+                      const original = items[idx];
+                      const itemId = original?.id || `item-${idx}`;
+
+                      return (
+                        <tr key={itemId} className="hover:bg-[#F8F9FB] transition-colors">
+                          <td className="py-3 px-4 space-y-0.5">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span
+                                className={`font-mono text-[10px] font-semibold px-1.5 py-0.5 rounded ${
+                                  lineItem.isUnconfirmed
+                                    ? "bg-[#FEF3C7] text-[#92400E]"
+                                    : "bg-[#F1F3F5] text-[#525252]"
+                                }`}
+                              >
+                                {lineItem.sku}
+                              </span>
+                              <span className="font-semibold text-[#171717]">{lineItem.name}</span>
+                            </div>
+                            {original?.deliverable && (
+                              <p className="text-[11px] text-[#737373] leading-tight">
+                                {original.deliverable}
+                              </p>
+                            )}
+                          </td>
+                          <td className="py-3 px-3 text-center font-mono font-bold text-xs text-[#171717]">
+                            {lineItem.quantity}x
+                          </td>
+                          <td className="py-3 px-4 text-right font-mono text-[#525252]">
+                            {lineItem.unitPriceDisplay}
+                          </td>
+                          <td className="py-3 px-4 text-right font-mono font-bold text-[#171717]">
+                            {lineItem.lineTotalDisplay}
+                          </td>
+                          <td className="py-3 px-3 text-center">
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteItem(itemId)}
+                              className="text-[#9CA3AF] hover:text-[#EF4444] cursor-pointer transition-colors"
+                              title="Hapus baris"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                  <tfoot>
+                    <tr className="border-t-2 border-[#171717] bg-[#F8F9FB] font-bold text-xs">
+                      <td colSpan={3} className="py-3.5 px-4 text-right text-[#525252]">
+                        Total Nilai Kontrak (Terkonfirmasi):
+                      </td>
+                      <td className="py-3.5 px-4 text-right font-mono text-base text-[#2563EB]">
+                        {formatRupiah(totalKontrak)}
+                      </td>
+                      <td />
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </BentoCard>
+          )}
         </div>
       )}
 

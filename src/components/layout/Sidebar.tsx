@@ -109,7 +109,7 @@ export function Sidebar({
             {/* Profile / Persona Switcher */}
             <div className="bg-[#F8F9FB] border border-[#E5E7EB] rounded-lg p-1 space-y-0.5">
               <span className="text-[10px] font-bold text-[#737373] px-2 py-0.5 uppercase tracking-wider block">
-                Studio Aktif
+                Studio UMKM: Gemintang Production
               </span>
               <div className="grid grid-cols-2 gap-1">
                 <button
@@ -126,7 +126,7 @@ export function Sidebar({
                   aria-pressed={activeBrand === "gemintang"}
                 >
                   <FontAwesomeIcon icon={faLaptopCode} className="text-[11px] text-[#2563EB]" />
-                  <span>Web Dev</span>
+                  <span>Gemintang</span>
                 </button>
 
                 <button
@@ -188,11 +188,12 @@ export function Sidebar({
           </nav>
 
           {/* 3. Studio Footer Info */}
-          <div className="p-3.5 border-t border-[#E5E7EB] bg-[#F8F9FB] text-xs">
+          <div className="p-3.5 border-t border-[#E5E7EB] bg-[#F8F9FB] text-xs space-y-1">
             <div className="flex items-center justify-between text-[11px] text-[#737373] font-semibold">
-              <span>Track AI Ekraf</span>
-              <span className="text-[#10B981] font-semibold">&bull; Topik 1</span>
+              <span className="font-bold text-[#171717]">Gemintang Production</span>
+              <span className="text-[#10B981] font-semibold">&bull; Evaluasi Aktif</span>
             </div>
+            <p className="text-[10px] text-[#737373]">Studio Web & Rekayasa Solusi Digital</p>
           </div>
         </div>
       </aside>

@@ -7,8 +7,19 @@
       "skus": [
         "WEB-LP-01",
         "WEB-CP-02",
+        "WEB-ECOMM-01",
         "WEB-ADD-PAGE",
         "WEB-ADD-CMS",
+        "WEB-NOTIF-EMAIL",
+        "WEB-DASH-KPI",
+        "WEB-PAY-GATEWAY",
+        "WEB-AUTH-PORTAL",
+        "WEB-WA-NOTIF",
+        "WEB-FILTER-SEARCH",
+        "WEB-SEO-BOOST",
+        "WEB-I18N-LANG",
+        "WEB-LIVE-CHAT",
+        "WEB-FORM-MULTI",
         "WEB-MAINT-01"
       ]
     },
@@ -20,8 +31,13 @@
         "FOTO-EVT-01",
         "FOTO-EVT-02",
         "VID-HIGH-01",
+        "VID-REELS-01",
+        "DRONE-AERIAL-01",
+        "VOICE-OVER-01",
+        "FOTO-RETOUCH-10",
         "ADD-HOUR-01",
-        "ADD-RAW-01"
+        "ADD-RAW-01",
+        "EXPRESS-EDIT-24"
       ]
     }
   },
@@ -32,6 +48,7 @@
       "business_key": "gemintang",
       "name": "Landing Page Responsif",
       "price": 1500000,
+      "category": "core",
       "attributes": {
         "pages": 5,
         "max_revisions": 2
@@ -48,6 +65,7 @@
       "business_key": "gemintang",
       "name": "Website Company Profile & Katalog",
       "price": 3000000,
+      "category": "core",
       "attributes": {
         "pages": 8,
         "max_revisions": 2
@@ -59,30 +77,220 @@
       "revision_policy": "Maksimal 2 putaran revisi minor dalam 7 hari kerja setelah staging. Garansi bug 14 hari."
     },
     {
+      "sku": "WEB-ECOMM-01",
+      "business": "Gemintang Production",
+      "business_key": "gemintang",
+      "name": "Website Toko Online & Katalog E-Commerce",
+      "price": 4500000,
+      "category": "core",
+      "attributes": {
+        "pages": 12,
+        "catalog_items": 50,
+        "max_revisions": 2
+      },
+      "excludes": [
+        "Sistem multi-warehouse / gudang terpisah",
+        "Integrasi API kurir logistik kustom internasional"
+      ],
+      "revision_policy": "Maksimal 2 putaran revisi minor dalam 10 hari kerja. Garansi bug 30 hari."
+    },
+    {
       "sku": "WEB-ADD-PAGE",
       "business": "Gemintang Production",
       "business_key": "gemintang",
-      "name": "Tambahan Halaman Statis",
+      "name": "Tambahan Halaman Statis Responsif",
       "price": 250000,
+      "category": "addon",
       "attributes": {
         "pages": 1,
         "max_revisions": 1
       },
       "excludes": [],
-      "revision_policy": "1x penyesuaian."
+      "revision_policy": "1x penyesuaian tata letak per halaman."
     },
     {
       "sku": "WEB-ADD-CMS",
       "business": "Gemintang Production",
       "business_key": "gemintang",
-      "name": "Modul CMS Admin Panel",
+      "name": "Modul CMS Admin Panel (Blog & Artikel)",
       "price": 1000000,
+      "category": "feature",
       "attributes": {
         "modules": 1,
+        "features": "CRUD Artikel, Kategori, & Media Upload",
         "max_revisions": 1
       },
-      "excludes": [],
-      "revision_policy": "1x penyesuaian tata letak dashboard."
+      "excludes": [
+        "Multi-role user permission tingkat lanjut (> 2 roles)"
+      ],
+      "revision_policy": "1x penyesuaian tata letak dashboard & field data."
+    },
+    {
+      "sku": "WEB-NOTIF-EMAIL",
+      "business": "Gemintang Production",
+      "business_key": "gemintang",
+      "name": "Integrasi Notifikasi Email Otomatis",
+      "price": 350000,
+      "category": "feature",
+      "attributes": {
+        "template": 1,
+        "provider": "SMTP / Resend / SendGrid",
+        "max_revisions": 1
+      },
+      "excludes": [
+        "Biaya langganan API email berbayar pihak ketiga jika kuota gratis habis",
+        "Desain template HTML newsletter promosi kompleks (> 2 variasi)"
+      ],
+      "revision_policy": "1x penyesuaian teks format notifikasi email."
+    },
+    {
+      "sku": "WEB-DASH-KPI",
+      "business": "Gemintang Production",
+      "business_key": "gemintang",
+      "name": "Dashboard Admin & Visualisasi Statistik Pengunjung",
+      "price": 1250000,
+      "category": "feature",
+      "attributes": {
+        "charts": 4,
+        "metrics": "Leads, Traffic, Device, & Form Submissions",
+        "max_revisions": 2
+      },
+      "excludes": [
+        "Integrasi Data Warehouse / Big Data Enterprise eksternal"
+      ],
+      "revision_policy": "Maksimal 2x penyesuaian metrik dan filter grafik."
+    },
+    {
+      "sku": "WEB-PAY-GATEWAY",
+      "business": "Gemintang Production",
+      "business_key": "gemintang",
+      "name": "Integrasi Payment Gateway Otomatis (QRIS / Midtrans)",
+      "price": 1200000,
+      "category": "feature",
+      "attributes": {
+        "channels": "QRIS, VA Bank, E-Wallet",
+        "webhook": true,
+        "max_revisions": 2
+      },
+      "excludes": [
+        "Biaya aktivasi merchant / fee MDR per transaksi perbankan",
+        "Pengurusan legalitas dokumen PT/CV merchant klien"
+      ],
+      "revision_policy": "Maksimal 2x pengujian mode sandbox hingga webhook live."
+    },
+    {
+      "sku": "WEB-AUTH-PORTAL",
+      "business": "Gemintang Production",
+      "business_key": "gemintang",
+      "name": "Autentikasi Akun & Portal Klien/Member",
+      "price": 1500000,
+      "category": "feature",
+      "attributes": {
+        "roles": 2,
+        "features": "Register, Login, Forgot Password, Dashboard Profil",
+        "max_revisions": 2
+      },
+      "excludes": [
+        "Single Sign-On (SSO) SAML / Active Directory Enterprise"
+      ],
+      "revision_policy": "Maksimal 2x penyesuaian alur otentikasi & proteksi route."
+    },
+    {
+      "sku": "WEB-WA-NOTIF",
+      "business": "Gemintang Production",
+      "business_key": "gemintang",
+      "name": "Integrasi Notifikasi WhatsApp Blast / API Bot",
+      "price": 450000,
+      "category": "feature",
+      "attributes": {
+        "triggers": "Notif Form Kontak Masuk / Konfirmasi Order",
+        "max_revisions": 1
+      },
+      "excludes": [
+        "Biaya langganan API WhatsApp BSP / Fonnte / Waba resmi bulanan"
+      ],
+      "revision_policy": "1x penyesuaian template pesan WhatsApp."
+    },
+    {
+      "sku": "WEB-FILTER-SEARCH",
+      "business": "Gemintang Production",
+      "business_key": "gemintang",
+      "name": "Modul Pencarian & Filter Produk Dinamis",
+      "price": 600000,
+      "category": "feature",
+      "attributes": {
+        "filter_types": "Kategori, Harga, Keyword Instant Search",
+        "max_revisions": 1
+      },
+      "excludes": [
+        "Mesin rekomendasi pencarian berbasis AI / Semantic Search"
+      ],
+      "revision_policy": "1x penyesuaian kriteria parameter filter."
+    },
+    {
+      "sku": "WEB-SEO-BOOST",
+      "business": "Gemintang Production",
+      "business_key": "gemintang",
+      "name": "Paket Optimasi SEO On-Page & Speed Booster",
+      "price": 400000,
+      "category": "addon",
+      "attributes": {
+        "targets": "Sitemap XML, Meta OG Tags, Skor Core Web Vitals Hijau",
+        "max_revisions": 1
+      },
+      "excludes": [
+        "Jaminan peringkat 1 Google secara instan",
+        "Biaya kampanye Google Ads berbayar"
+      ],
+      "revision_policy": "1x audit ulang metrik PageSpeed pasca rilis."
+    },
+    {
+      "sku": "WEB-I18N-LANG",
+      "business": "Gemintang Production",
+      "business_key": "gemintang",
+      "name": "Modul Multi-Bahasa (Bilingual ID/EN Switcher)",
+      "price": 500000,
+      "category": "feature",
+      "attributes": {
+        "languages": 2,
+        "max_revisions": 1
+      },
+      "excludes": [
+        "Jasa penerjemahan tersumpah naskah hukum/dokumen resmi"
+      ],
+      "revision_policy": "1x penyesuaian struktur kamus terjemahan."
+    },
+    {
+      "sku": "WEB-LIVE-CHAT",
+      "business": "Gemintang Production",
+      "business_key": "gemintang",
+      "name": "Integrasi Widget Live Chat Kustom (Tawk.to / Crisp)",
+      "price": 200000,
+      "category": "feature",
+      "attributes": {
+        "platforms": "Widget Desktop & Mobile",
+        "max_revisions": 1
+      },
+      "excludes": [
+        "Petugas operator customer service manusia standby"
+      ],
+      "revision_policy": "1x kustomisasi warna dan sambutan widget."
+    },
+    {
+      "sku": "WEB-FORM-MULTI",
+      "business": "Gemintang Production",
+      "business_key": "gemintang",
+      "name": "Formulir Multi-Step / Pemesanan & Kalkulator Interaktif",
+      "price": 550000,
+      "category": "feature",
+      "attributes": {
+        "steps": "3-4 Tahap Interaktif + Validasi Input Lengkap",
+        "max_revisions": 1
+      },
+      "excludes": [
+        "Integrasi sistem ERP pihak ketiga"
+      ],
+      "revision_policy": "1x penyesuaian logika validasi form."
     },
     {
       "sku": "WEB-MAINT-01",
@@ -90,12 +298,16 @@
       "business_key": "gemintang",
       "name": "Maintenance & Backup Bulanan",
       "price": 500000,
+      "category": "addon",
       "attributes": {
         "months": 1,
+        "services": "Weekly Backup, Security Patch, Minor Uptime Monitoring",
         "max_revisions": 0
       },
-      "excludes": [],
-      "revision_policy": "Tanpa revisi struktur."
+      "excludes": [
+        "Perombakan total struktur halaman atau penambahan fitur baru"
+      ],
+      "revision_policy": "Pemeliharaan rutin tanpa revisi struktur arsitektur."
     },
     {
       "sku": "FOTO-EVT-01",
@@ -103,6 +315,7 @@
       "business_key": "memoku",
       "name": "Dokumentasi Event Half-Day 4 Jam",
       "price": 1200000,
+      "category": "core",
       "attributes": {
         "hours": 4,
         "edited_photos": 80,
@@ -120,6 +333,7 @@
       "business_key": "memoku",
       "name": "Dokumentasi Event Full-Day 8 Jam",
       "price": 2200000,
+      "category": "core",
       "attributes": {
         "hours": 8,
         "edited_photos": 150,
@@ -137,8 +351,10 @@
       "business_key": "memoku",
       "name": "Video Aftermovie / Highlight 1 Menit",
       "price": 1500000,
+      "category": "core",
       "attributes": {
         "duration_min": 1,
+        "resolution": "4K UHD",
         "max_revisions": 2
       },
       "excludes": [
@@ -147,31 +363,116 @@
       "revision_policy": "Maksimal 2x revisi minor cut/color."
     },
     {
+      "sku": "VID-REELS-01",
+      "business": "MemokuVisual",
+      "business_key": "memoku",
+      "name": "Video Vertikal Reels / TikTok Pendek (15-30 Detik)",
+      "price": 600000,
+      "category": "feature",
+      "attributes": {
+        "duration_sec": 30,
+        "aspect_ratio": "9:16",
+        "max_revisions": 1
+      },
+      "excludes": [
+        "Shooting ulang setelah produksi selesai"
+      ],
+      "revision_policy": "Maksimal 1x revisi minor pemotongan & musik."
+    },
+    {
+      "sku": "DRONE-AERIAL-01",
+      "business": "MemokuVisual",
+      "business_key": "memoku",
+      "name": "Liputan Udara / Drone Aerial Video 4K",
+      "price": 850000,
+      "category": "feature",
+      "attributes": {
+        "resolution": "4K",
+        "battery_sessions": 2,
+        "max_revisions": 1
+      },
+      "excludes": [
+        "Izin terbang di zona terlarang (No-Fly Zone / Bandara)"
+      ],
+      "revision_policy": "1x penyesuaian grading footage drone."
+    },
+    {
+      "sku": "VOICE-OVER-01",
+      "business": "MemokuVisual",
+      "business_key": "memoku",
+      "name": "Pengisian Suara Profesional (Voice Over & Sound Design)",
+      "price": 450000,
+      "category": "feature",
+      "attributes": {
+        "duration_min": 1,
+        "languages": "ID / EN",
+        "max_revisions": 1
+      },
+      "excludes": [
+        "Perubahan naskah skrip setelah rekaman vokal disetujui"
+      ],
+      "revision_policy": "1x penyesuaian intonasi nada bacaan."
+    },
+    {
+      "sku": "FOTO-RETOUCH-10",
+      "business": "MemokuVisual",
+      "business_key": "memoku",
+      "name": "Paket Retouching Kulit & High-End Beauty (10 Foto)",
+      "price": 300000,
+      "category": "addon",
+      "attributes": {
+        "photos": 10,
+        "max_revisions": 1
+      },
+      "excludes": [
+        "Manipulasi latar belakang ekstrem dari nol"
+      ],
+      "revision_policy": "1x koreksi tonal warna dan noda."
+    },
+    {
       "sku": "ADD-HOUR-01",
       "business": "MemokuVisual",
       "business_key": "memoku",
-      "name": "Tambahan Jam Liputan / Overtime",
+      "name": "Tambahan Jam Liputan / Overtime Shooting",
       "price": 300000,
+      "category": "addon",
       "attributes": {
         "hours": 1,
         "max_revisions": 0
       },
       "excludes": [],
-      "revision_policy": "Mengikuti jadwal liputan utama."
+      "revision_policy": "Mengikuti jadwal liputan utama di lokasi."
     },
     {
       "sku": "ADD-RAW-01",
       "business": "MemokuVisual",
       "business_key": "memoku",
-      "name": "Lisensi Serah Terima Seluruh File Mentah/RAW",
+      "name": "Lisensi Serah Terima Seluruh File Mentah/RAW 4K",
       "price": 500000,
+      "category": "addon",
       "attributes": {
         "raw_package": 1,
         "max_revisions": 0
       },
       "excludes": [],
       "revision_policy": "Tanpa proses editing tambahan."
+    },
+    {
+      "sku": "EXPRESS-EDIT-24",
+      "business": "MemokuVisual",
+      "business_key": "memoku",
+      "name": "Layanan Kilat Express Editing (Selesai 24-48 Jam)",
+      "price": 500000,
+      "category": "addon",
+      "attributes": {
+        "delivery_hours": 48,
+        "priority": "Express Priority",
+        "max_revisions": 1
+      },
+      "excludes": [
+        "Perubahan alur konsep video mendadak di tengah editing"
+      ],
+      "revision_policy": "1x revisi cepat dalam waktu 12 jam sejak draf diterima."
     }
   ]
 }
-

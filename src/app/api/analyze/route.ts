@@ -149,7 +149,159 @@ function buildFallbackResponse(
       };
     });
 
-    const quotation = calculateQuotation(scenario.initialItems);
+    // Deteksi fitur mikro dinamis dari percakapan untuk komposisi harga yang presisi
+    const detectedItems = [...scenario.initialItems];
+    const fullLower = clientChat.toLowerCase();
+
+    if (brandKey === "gemintang") {
+      // 1. Deteksi CMS
+      if (
+        (fullLower.includes("cms") ||
+          fullLower.includes("admin panel") ||
+          fullLower.includes("kelola artikel") ||
+          fullLower.includes("input konten")) &&
+        !detectedItems.some((i) => i.sku === "WEB-ADD-CMS")
+      ) {
+        detectedItems.push({
+          id: `dyn-cms-${Date.now()}`,
+          sku: "WEB-ADD-CMS",
+          name: "Modul CMS Admin Panel (Blog & Artikel)",
+          quantity: 1,
+          deliverable: "Panel admin CRUD artikel & media upload",
+          notes: "1x penyesuaian tata letak dashboard & field data.",
+        });
+      }
+
+      // 2. Deteksi Notifikasi Email
+      if (
+        (fullLower.includes("email") ||
+          fullLower.includes("notif email") ||
+          fullLower.includes("smtp") ||
+          fullLower.includes("sendgrid")) &&
+        !detectedItems.some((i) => i.sku === "WEB-NOTIF-EMAIL")
+      ) {
+        detectedItems.push({
+          id: `dyn-email-${Date.now()}`,
+          sku: "WEB-NOTIF-EMAIL",
+          name: "Integrasi Notifikasi Email Otomatis",
+          quantity: 1,
+          deliverable: "1 Template notifikasi email via SMTP/Resend",
+          notes: "1x penyesuaian teks format notifikasi email.",
+        });
+      }
+
+      // 3. Deteksi Dashboard KPI / Statistik
+      if (
+        (fullLower.includes("dashboard") ||
+          fullLower.includes("statistik") ||
+          fullLower.includes("analytics") ||
+          fullLower.includes("kpi")) &&
+        !detectedItems.some((i) => i.sku === "WEB-DASH-KPI")
+      ) {
+        detectedItems.push({
+          id: `dyn-dash-${Date.now()}`,
+          sku: "WEB-DASH-KPI",
+          name: "Dashboard Admin & Visualisasi Statistik Pengunjung",
+          quantity: 1,
+          deliverable: "Dashboard 4 grafik metrik leads & traffic",
+          notes: "Maksimal 2x penyesuaian metrik dan filter grafik.",
+        });
+      }
+
+      // 4. Deteksi Payment Gateway
+      if (
+        fullLower.includes("payment") ||
+        fullLower.includes("pembayaran") ||
+        fullLower.includes("qris") ||
+        fullLower.includes("midtrans")
+      ) {
+        const unmappedIdx = detectedItems.findIndex((i) => i.sku === "UNMAPPED");
+        if (unmappedIdx >= 0) {
+          detectedItems[unmappedIdx] = {
+            id: `dyn-pay-${Date.now()}`,
+            sku: "WEB-PAY-GATEWAY",
+            name: "Integrasi Payment Gateway Otomatis (QRIS / Midtrans)",
+            quantity: 1,
+            deliverable: "Koneksi webhook pembayaran QRIS & VA Bank",
+            notes: "Maksimal 2x pengujian mode sandbox hingga webhook live.",
+          };
+        } else if (!detectedItems.some((i) => i.sku === "WEB-PAY-GATEWAY")) {
+          detectedItems.push({
+            id: `dyn-pay-${Date.now()}`,
+            sku: "WEB-PAY-GATEWAY",
+            name: "Integrasi Payment Gateway Otomatis (QRIS / Midtrans)",
+            quantity: 1,
+            deliverable: "Koneksi webhook pembayaran QRIS & VA Bank",
+            notes: "Maksimal 2x pengujian mode sandbox hingga webhook live.",
+          });
+        }
+      }
+
+      // 5. Deteksi Notifikasi WhatsApp
+      if (
+        (fullLower.includes("notif wa") ||
+          fullLower.includes("blast wa") ||
+          fullLower.includes("bot wa")) &&
+        !detectedItems.some((i) => i.sku === "WEB-WA-NOTIF")
+      ) {
+        detectedItems.push({
+          id: `dyn-wa-${Date.now()}`,
+          sku: "WEB-WA-NOTIF",
+          name: "Integrasi Notifikasi WhatsApp Blast / API Bot",
+          quantity: 1,
+          deliverable: "Notifikasi otomatis form masuk ke WhatsApp admin",
+          notes: "1x penyesuaian template pesan WhatsApp.",
+        });
+      }
+
+      // 6. Deteksi Filter & Search
+      if (
+        (fullLower.includes("filter") ||
+          fullLower.includes("search") ||
+          fullLower.includes("pencarian")) &&
+        !detectedItems.some((i) => i.sku === "WEB-FILTER-SEARCH")
+      ) {
+        detectedItems.push({
+          id: `dyn-filter-${Date.now()}`,
+          sku: "WEB-FILTER-SEARCH",
+          name: "Modul Pencarian & Filter Produk Dinamis",
+          quantity: 1,
+          deliverable: "Fitur instant search keyword & filter kategori",
+          notes: "1x penyesuaian kriteria parameter filter.",
+        });
+      }
+    } else {
+      // Sektor MemokuVisual
+      if (
+        (fullLower.includes("reels") || fullLower.includes("tiktok") || fullLower.includes("vertikal")) &&
+        !detectedItems.some((i) => i.sku === "VID-REELS-01")
+      ) {
+        detectedItems.push({
+          id: `dyn-reels-${Date.now()}`,
+          sku: "VID-REELS-01",
+          name: "Video Vertikal Reels / TikTok Pendek (15-30 Detik)",
+          quantity: 1,
+          deliverable: "1 Video 9:16 untuk media sosial dengan musik trending",
+          notes: "Maksimal 1x revisi minor pemotongan & musik.",
+        });
+      }
+
+      if (
+        (fullLower.includes("drone") || fullLower.includes("aerial") || fullLower.includes("udara")) &&
+        !detectedItems.some((i) => i.sku === "DRONE-AERIAL-01")
+      ) {
+        detectedItems.push({
+          id: `dyn-drone-${Date.now()}`,
+          sku: "DRONE-AERIAL-01",
+          name: "Liputan Udara / Drone Aerial Video 4K",
+          quantity: 1,
+          deliverable: "Footage udara 4K tajam dengan 2 sesi baterai",
+          notes: "1x penyesuaian grading footage drone.",
+        });
+      }
+    }
+
+    const quotation = calculateQuotation(detectedItems);
 
     return NextResponse.json({
       success: true,
@@ -158,14 +310,14 @@ function buildFallbackResponse(
       brand: brandKey,
       briefChips: dynamicChips.length > 0 ? dynamicChips : scenario.briefChips,
       waQuestions: scenario.waQuestions,
-      items: scenario.initialItems,
+      items: detectedItems,
       quotation,
       policy: scenario.policy,
       summary: {
         totalRisks: dynamicChips.filter((c) => c.level === "merah").length,
         totalAmbiguities: dynamicChips.filter((c) => c.level === "kuning").length,
         totalClear: dynamicChips.filter((c) => c.level === "hijau").length,
-        generalNote: "Analisis teks brief berhasil diproses via Fallback Cerdas.",
+        generalNote: "Analisis teks brief dan pemetaan katalog fitur berhasil diproses.",
       },
     });
   }
