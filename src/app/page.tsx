@@ -23,6 +23,7 @@ import {
   Layers,
   UploadCloud,
   Search,
+  Loader2,
 } from "lucide-react";
 import { ImageDropzone, UploadedImageData } from "../components/ui/ImageDropzone";
 import {
@@ -71,6 +72,7 @@ export default function KaryaFlowDashboard() {
   );
 
   // Status & interactive feedback
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
   const [isWaCopied, setIsWaCopied] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<{
@@ -307,6 +309,7 @@ export default function KaryaFlowDashboard() {
       }
     }
 
+    setIsLoading(true);
     setIsAnalyzing(true);
     setAiErrorAlert(null); // Bersihkan error alert sebelumnya
     triggerToast(
@@ -367,6 +370,7 @@ export default function KaryaFlowDashboard() {
       console.warn("AI analyze error / timeout:", err);
 
       // Pastikan isLoading false & cegah UI crash (white screen)
+      setIsLoading(false);
       setIsAnalyzing(false);
 
       // Pertahankan data yang ada agar tidak blank/white screen
@@ -383,6 +387,7 @@ export default function KaryaFlowDashboard() {
       setAiErrorAlert("Sistem AI sibuk, coba lagi nanti.");
       triggerToast("Sistem AI sibuk, coba lagi nanti.", true);
     } finally {
+      setIsLoading(false);
       setIsAnalyzing(false);
     }
   };
@@ -708,7 +713,7 @@ export default function KaryaFlowDashboard() {
                   <ImageDropzone
                     image={uploadedImage}
                     onImageChange={setUploadedImage}
-                    disabled={isAnalyzing}
+                    disabled={isLoading}
                   />
                 </div>
               ) : (
@@ -719,7 +724,7 @@ export default function KaryaFlowDashboard() {
                     onChange={(e) => setInputBriefText(e.target.value)}
                     placeholder="Tempel transkrip chat WhatsApp di sini..."
                     className="w-full text-xs font-mono p-3 rounded-lg border border-[#E5E7EB] focus:outline-none focus:border-[#171717] focus:ring-1 focus:ring-[#171717] bg-[#F8F9FB] leading-relaxed placeholder:text-[#9CA3AF] min-w-0"
-                    disabled={isAnalyzing}
+                    disabled={isLoading}
                   />
                 </div>
               )}
@@ -728,153 +733,219 @@ export default function KaryaFlowDashboard() {
                 <button
                   type="button"
                   disabled={
-                    isAnalyzing ||
+                    isLoading ||
                     (activeInputMode === "upload" && !uploadedImage)
                   }
                   onClick={handleRunAiAnalysis}
                   className="w-full sm:w-auto h-9 px-4 rounded-lg bg-[#171717] hover:bg-[#262626] text-white text-xs font-semibold flex items-center justify-center gap-2 transition-colors disabled:opacity-40 cursor-pointer shadow-xs"
                 >
-                  <Sparkles
-                    className={`w-3.5 h-3.5 text-white ${
-                      isAnalyzing ? "animate-spin" : ""
-                    }`}
-                  />
-                  <span>
-                    {isAnalyzing
-                      ? activeInputMode === "upload"
-                        ? "Gemini Membedah Screenshot..."
-                        : "AI Membedah Brief Teks..."
-                      : activeInputMode === "upload"
-                      ? "Bedah Screenshot dengan Gemini AI"
-                      : "Bedah Brief dengan Gemini AI"}
-                  </span>
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 text-white animate-spin" />
+                      <span>Mendeteksi...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-3.5 h-3.5 text-white" />
+                      <span>
+                        {activeInputMode === "upload"
+                          ? "Bedah Screenshot dengan Gemini AI"
+                          : "Bedah Brief dengan Gemini AI"}
+                      </span>
+                    </>
+                  )}
                 </button>
               </div>
             </BentoCard>
 
-            {/* Draf Klarifikasi WA */}
-            <BentoCard>
-              <BentoHeader
-                title="Draf Pertanyaan Klarifikasi WhatsApp"
-                subtitle="Kunci ekspektasi tertulis sebelum klien membayar DP"
-                badge={
-                  <span className="text-[11px] font-mono text-[#10B981] font-semibold bg-[#ECFDF5] px-2 py-0.5 rounded">
-                    {activeQuestionsCount} Poin Terpilih
-                  </span>
-                }
-              />
-              <div className="space-y-2 mb-4">
-                {waQuestions.map((q) => (
-                  <div
-                    key={q.id}
-                    onClick={() => toggleWaQuestion(q.id)}
-                    className={`p-3 rounded-lg border text-xs cursor-pointer flex items-start gap-3 transition-colors ${
-                      q.checked
-                        ? "bg-[#F8F9FB] border-[#D1D5DB]"
-                        : "bg-white border-[#E5E7EB] opacity-60"
-                    }`}
-                  >
-                    <div className="mt-0.5 shrink-0 text-[#171717]">
-                      {q.checked ? (
-                        <CheckSquare className="w-4 h-4 text-[#2563EB]" />
-                      ) : (
-                        <Square className="w-4 h-4 text-[#9CA3AF]" />
-                      )}
-                    </div>
-                    <div className="space-y-0.5 min-w-0">
-                      <p className="font-medium text-[#171717] leading-tight">{q.text}</p>
-                      <span className="text-[11px] text-[#737373] block">{q.context}</span>
-                    </div>
+            {/* Draf Klarifikasi WA / Skeleton Loading */}
+            {isLoading ? (
+              <BentoCard className="animate-pulse space-y-3.5">
+                <div className="flex items-center justify-between pb-2.5 border-b border-[#F1F3F5]">
+                  <div className="space-y-1.5 flex-1 min-w-0">
+                    <div className="h-4 w-48 bg-zinc-200 rounded-md" />
+                    <div className="h-3 w-64 bg-zinc-100 rounded-md" />
                   </div>
-                ))}
-              </div>
-              <button
-                type="button"
-                onClick={handleCopyWa}
-                disabled={activeQuestionsCount === 0}
-                className="w-full h-9 px-4 rounded-lg bg-[#10B981] hover:bg-[#059669] text-white text-xs font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:opacity-50 shadow-xs"
-              >
-                {isWaCopied ? (
-                  <>
-                    <Check className="w-4 h-4" />
-                    <span>Draf Klarifikasi Tersalin ke Clipboard!</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-4 h-4" />
-                    <span>Salin Pesan ke WhatsApp</span>
-                  </>
-                )}
-              </button>
-            </BentoCard>
-          </div>
+                  <div className="h-5 w-20 bg-zinc-200 rounded-full shrink-0" />
+                </div>
 
-          {/* Kolom Kanan: Hasil Bedah Frasa (Span 6) */}
-          <div className="lg:col-span-6 space-y-4 sm:space-y-6 min-w-0 w-full">
-            <BentoCard>
-              <BentoHeader
-                title={`Hasil Bedah Frasa Klien (${currentBriefChips.length} Poin)`}
-                subtitle="Klik baris klausul untuk membaca alasan hukum dan risiko teknis"
-              />
-              <div className="space-y-2">
-                {currentBriefChips.map((chip) => {
-                  const isExpanded = chip.id === expandedChipId;
-                  let signalDot = "bg-[#10B981]";
-                  let borderTone = "border-[#E5E7EB]";
-
-                  if (chip.level === "merah") {
-                    signalDot = "bg-[#EF4444]";
-                    borderTone = isExpanded ? "border-[#EF4444]" : "border-[#FECDD3]";
-                  } else if (chip.level === "kuning") {
-                    signalDot = "bg-[#F59E0B]";
-                    borderTone = isExpanded ? "border-[#F59E0B]" : "border-[#FDE68A]";
-                  }
-
-                  return (
+                <div className="space-y-2">
+                  {[1, 2, 3].map((i) => (
                     <div
-                      key={chip.id}
-                      className={`rounded-lg border bg-white transition-all text-xs cursor-pointer ${borderTone}`}
-                      onClick={() => setExpandedChipId(isExpanded ? null : chip.id)}
+                      key={i}
+                      className="p-3 rounded-lg border border-zinc-200 bg-[#F8F9FB] flex items-start gap-3"
                     >
-                      <div className="p-3 flex items-start gap-3">
-                        <span className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${signalDot}`} />
-                        <div className="flex-1 min-w-0 space-y-1">
-                          <div className="flex items-center justify-between text-[11px] font-mono text-[#737373] gap-2">
-                            <span className="truncate">{chip.category}</span>
-                            <span className="shrink-0">{chip.speaker}</span>
-                          </div>
-                          <p className="font-semibold text-[#171717] leading-snug">
-                            "{chip.quote}"
-                          </p>
-                        </div>
+                      <div className="w-4 h-4 rounded bg-zinc-300 shrink-0 mt-0.5" />
+                      <div className="space-y-1.5 flex-1 min-w-0">
+                        <div className="h-3.5 bg-zinc-200 rounded w-11/12" />
+                        <div className="h-2.5 bg-zinc-100 rounded w-1/2" />
                       </div>
-
-                      {isExpanded && (
-                        <div className="px-3 pb-3 pt-2 border-t border-[#F1F3F5] bg-[#F8F9FB] text-xs space-y-1.5 animate-in fade-in duration-150">
-                          <span className="text-[10px] font-mono text-[#737373] uppercase tracking-wider block">
-                            Mengapa ini krusial?
-                          </span>
-                          <p className="text-[#374151] leading-relaxed">
-                            {chip.reason}
-                          </p>
-                        </div>
-                      )}
                     </div>
-                  );
-                })}
-              </div>
+                  ))}
+                </div>
 
-              <div className="mt-4 pt-4 border-t border-[#F1F3F5] flex justify-end">
+                <div className="h-9 w-full bg-zinc-200 rounded-lg mt-2" />
+              </BentoCard>
+            ) : (
+              <BentoCard>
+                <BentoHeader
+                  title="Draf Pertanyaan Klarifikasi WhatsApp"
+                  subtitle="Kunci ekspektasi tertulis sebelum klien membayar DP"
+                  badge={
+                    <span className="text-[11px] font-mono text-[#10B981] font-semibold bg-[#ECFDF5] px-2 py-0.5 rounded">
+                      {activeQuestionsCount} Poin Terpilih
+                    </span>
+                  }
+                />
+                <div className="space-y-2 mb-4">
+                  {waQuestions.map((q) => (
+                    <div
+                      key={q.id}
+                      onClick={() => toggleWaQuestion(q.id)}
+                      className={`p-3 rounded-lg border text-xs cursor-pointer flex items-start gap-3 transition-colors ${
+                        q.checked
+                          ? "bg-[#F8F9FB] border-[#D1D5DB]"
+                          : "bg-white border-[#E5E7EB] opacity-60"
+                      }`}
+                    >
+                      <div className="mt-0.5 shrink-0 text-[#171717]">
+                        {q.checked ? (
+                          <CheckSquare className="w-4 h-4 text-[#2563EB]" />
+                        ) : (
+                          <Square className="w-4 h-4 text-[#9CA3AF]" />
+                        )}
+                      </div>
+                      <div className="space-y-0.5 min-w-0">
+                        <p className="font-medium text-[#171717] leading-tight">{q.text}</p>
+                        <span className="text-[11px] text-[#737373] block">{q.context}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
                 <button
                   type="button"
-                  onClick={() => setActiveView("contract")}
-                  className="w-full sm:w-auto h-8 px-3.5 rounded-lg bg-[#171717] hover:bg-[#262626] text-white text-xs font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                  onClick={handleCopyWa}
+                  disabled={activeQuestionsCount === 0}
+                  className="w-full h-9 px-4 rounded-lg bg-[#10B981] hover:bg-[#059669] text-white text-xs font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:opacity-50 shadow-xs"
                 >
-                  <span>Lanjut ke Katalog & Nilai SKU</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  {isWaCopied ? (
+                    <>
+                      <Check className="w-4 h-4" />
+                      <span>Draf Klarifikasi Tersalin ke Clipboard!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4" />
+                      <span>Salin Pesan ke WhatsApp</span>
+                    </>
+                  )}
                 </button>
-              </div>
-            </BentoCard>
+              </BentoCard>
+            )}
+          </div>
+
+          {/* Kolom Kanan: Hasil Bedah Frasa (Span 6) / Skeleton Loading */}
+          <div className="lg:col-span-6 space-y-4 sm:space-y-6 min-w-0 w-full">
+            {isLoading ? (
+              /* Skeleton Loading Bento Card untuk Hasil Bedah Frasa Klien */
+              <BentoCard className="animate-pulse space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-[#F1F3F5]">
+                  <div className="space-y-2 flex-1 min-w-0">
+                    <div className="h-4 w-52 bg-zinc-200 rounded-md" />
+                    <div className="h-3 w-72 bg-zinc-100 rounded-md" />
+                  </div>
+                  <div className="h-5 w-24 bg-zinc-200 rounded-full shrink-0" />
+                </div>
+
+                <div className="space-y-2.5">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <div
+                      key={i}
+                      className="p-3.5 rounded-lg border border-zinc-200 bg-[#F8F9FB] space-y-2"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                          <div className="w-2.5 h-2.5 rounded-full bg-zinc-300 shrink-0" />
+                          <div className="h-3.5 bg-zinc-200 rounded w-4/5" />
+                        </div>
+                        <div className="h-4 w-16 bg-zinc-200 rounded shrink-0" />
+                      </div>
+                      <div className="h-2.5 bg-zinc-200/70 rounded w-3/5 ml-5" />
+                    </div>
+                  ))}
+                </div>
+
+                <div className="pt-3 border-t border-[#F1F3F5] flex items-center justify-between">
+                  <div className="h-3 w-40 bg-zinc-200 rounded" />
+                  <div className="h-3 w-28 bg-zinc-200 rounded" />
+                </div>
+              </BentoCard>
+            ) : (
+              <BentoCard>
+                <BentoHeader
+                  title={`Hasil Bedah Frasa Klien (${currentBriefChips.length} Poin)`}
+                  subtitle="Klik baris klausul untuk membaca alasan hukum dan risiko teknis"
+                />
+                <div className="space-y-2">
+                  {currentBriefChips.map((chip) => {
+                    const isExpanded = chip.id === expandedChipId;
+                    let signalDot = "bg-[#10B981]";
+                    let borderTone = "border-[#E5E7EB]";
+
+                    if (chip.level === "merah") {
+                      signalDot = "bg-[#EF4444]";
+                      borderTone = isExpanded ? "border-[#EF4444]" : "border-[#FECDD3]";
+                    } else if (chip.level === "kuning") {
+                      signalDot = "bg-[#F59E0B]";
+                      borderTone = isExpanded ? "border-[#F59E0B]" : "border-[#FDE68A]";
+                    }
+
+                    return (
+                      <div
+                        key={chip.id}
+                        className={`rounded-lg border bg-white transition-all text-xs cursor-pointer ${borderTone}`}
+                        onClick={() => setExpandedChipId(isExpanded ? null : chip.id)}
+                      >
+                        <div className="p-3 flex items-start gap-3">
+                          <span className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${signalDot}`} />
+                          <div className="flex-1 min-w-0 space-y-1">
+                            <div className="flex items-center justify-between text-[11px] font-mono text-[#737373] gap-2">
+                              <span className="truncate">{chip.category}</span>
+                              <span className="shrink-0">{chip.speaker}</span>
+                            </div>
+                            <p className="font-semibold text-[#171717] leading-snug">
+                              "{chip.quote}"
+                            </p>
+                          </div>
+                        </div>
+
+                        {isExpanded && (
+                          <div className="px-3 pb-3 pt-2 border-t border-[#F1F3F5] bg-[#F8F9FB] text-xs space-y-1.5 animate-in fade-in duration-150">
+                            <span className="text-[10px] font-mono text-[#737373] uppercase tracking-wider block">
+                              Mengapa ini krusial?
+                            </span>
+                            <p className="text-[#374151] leading-relaxed">
+                              {chip.reason}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="mt-4 pt-4 border-t border-[#F1F3F5] flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setActiveView("contract")}
+                    className="w-full sm:w-auto h-8 px-3.5 rounded-lg bg-[#171717] hover:bg-[#262626] text-white text-xs font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <span>Lanjut ke Katalog & Nilai SKU</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </BentoCard>
+            )}
           </div>
         </div>
       )}
