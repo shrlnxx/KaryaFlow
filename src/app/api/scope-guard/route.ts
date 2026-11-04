@@ -8,7 +8,11 @@ import { UMKMKey } from "../../../data/mock-data";
 // 1. UNIVERSAL CALLER KE GEMINI API (AQ... & AIza...)
 // ==============================================================================
 async function callGeminiUniversal(apiKey: string, systemPrompt: string, userPrompt: string) {
-  const modelsToTry = ["gemini-3.5-flash-lite", "gemini-3.8-flash", "gemini-flash-latest"];
+  const modelsToTry = [
+    "gemini-1.5-flash",
+    "gemini-2.0-flash",
+    "gemini-1.5-pro",
+  ];
   let lastError: any = null;
 
   for (const model of modelsToTry) {
@@ -184,7 +188,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = (
+      process.env.GEMINI_API_KEY ||
+      process.env.GOOGLE_API_KEY ||
+      process.env.NEXT_PUBLIC_GEMINI_API_KEY ||
+      ""
+    ).trim().replace(/^["']|["']$/g, "");
 
     // Jika API key belum ada / offline, langsung pakai local fallback deterministik
     if (!apiKey || apiKey === "YOUR_GEMINI_API_KEY" || apiKey.length < 10) {
@@ -192,7 +201,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         success: true,
         isFallback: true,
-        fallbackReason: "Kunci API offline. Menggunakan evaluasi aturan deterministik PRD B6.",
+        fallbackReason: "Kunci API belum dikonfigurasi di Environment Variables Vercel (GEMINI_API_KEY). Menggunakan evaluasi aturan deterministik PRD B6.",
         result: fallback,
       });
     }

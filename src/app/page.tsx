@@ -498,17 +498,27 @@ export default function KaryaFlowDashboard() {
                 </div>
 
                 {/* Business Impact Calculation Alert Box (Emerald/Green Tailwind) */}
-                <div className="mt-3 p-3 bg-emerald-50 border border-emerald-300 rounded-lg text-emerald-950 shadow-xs flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-md bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
-                    <ShieldCheck className="w-4 h-4 text-white" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block">
-                      Business Impact &bull; Gemintang Production
-                    </span>
-                    <span className="text-xs sm:text-sm font-black text-emerald-950 block truncate">
-                      Nilai Margin/Waktu yang Diselamatkan: Rp {potensiKerugian.toLocaleString("id-ID")}
-                    </span>
+                <div className="mt-3 p-3 bg-emerald-50 border border-emerald-300 rounded-lg text-emerald-950 shadow-xs">
+                  <div className="flex items-start gap-2.5">
+                    <div className="w-7 h-7 rounded-md bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs mt-0.5">
+                      <ShieldCheck className="w-4 h-4 text-white" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block">
+                        Business Impact &bull; Gemintang Production
+                      </span>
+                      <span className="text-xs font-semibold text-emerald-900 block leading-tight mt-0.5">
+                        Nilai Margin/Waktu yang Diselamatkan:
+                      </span>
+                      <div className="flex items-baseline gap-1.5 mt-0.5 flex-wrap">
+                        <span className="text-base sm:text-lg font-black text-emerald-950 font-mono tabular-nums">
+                          Rp {potensiKerugian.toLocaleString("id-ID")}
+                        </span>
+                        <span className="text-[10px] text-emerald-700 font-medium">
+                          ({jumlah_rawan} Rawan + {jumlah_ambigu} Ambigu &times; Rp 250rb)
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

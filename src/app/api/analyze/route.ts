@@ -352,13 +352,11 @@ async function callGeminiUniversal(
   userPrompt: string,
   image?: { base64: string; mimeType: string } | null
 ) {
-  // Model dengan kapabilitas vision multimodal unggul
+  // Model resmi Google AI Studio (generativelanguage.googleapis.com)
   const modelsToTry = [
-    "gemini-2.0-flash",
-    "gemini-2.5-flash",
     "gemini-1.5-flash",
-    "gemini-3.5-flash-lite",
-    "gemini-flash-latest",
+    "gemini-2.0-flash",
+    "gemini-1.5-pro",
   ];
   let lastError: any = null;
 
@@ -453,16 +451,21 @@ export async function POST(req: NextRequest) {
     }
 
     hasImage = Boolean(imageBase64);
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = (
+      process.env.GEMINI_API_KEY ||
+      process.env.GOOGLE_API_KEY ||
+      process.env.NEXT_PUBLIC_GEMINI_API_KEY ||
+      ""
+    ).trim().replace(/^["']|["']$/g, "");
 
     // CEK 1: Validasi API Key
     if (!apiKey || apiKey === "YOUR_GEMINI_API_KEY" || apiKey.length < 10) {
       console.warn(
-        "[KaryaFlow API] GEMINI_API_KEY tidak terdeteksi. Menggunakan Auto-Fallback Mode."
+        "[KaryaFlow API] API Key Google AI Studio tidak terdeteksi. Menggunakan Auto-Fallback Mode."
       );
       return buildFallbackResponse(
         brandKey,
-        "GEMINI_API_KEY belum dikonfigurasi di .env.local. Mode Auto-Fallback aktif dengan data deterministik aman.",
+        "API Key belum dikonfigurasi di Environment Variables Vercel (GEMINI_API_KEY). Mode Auto-Fallback aktif dengan data deterministik aman.",
         clientChat,
         hasImage
       );
